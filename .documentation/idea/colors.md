@@ -13,68 +13,39 @@ Here are five carefully crafted, production-ready UI color palettes, all anchore
 
 Works best for B2B SaaS platforms, admin dashboards, and data-heavy interfaces where calm hierarchy matters most.
 
-***
-## 2. Nordic Fog
-*Wellness apps, health platforms & mindfulness tools*
 
-| Role | HEX | Description |
-|---|---|---|
-| **Primary** | `#495A65` | The base, unchanged — serene and balanced |
-| **Secondary** | `#8FA8A0` | Muted sage green-gray, evokes nature and clarity |
-| **Accent** | `#C4A882` | Warm sandy caramel — softly energizing without intrusion |
-| **Background** | `#F7F5F0` | Creamy warm white, promotes calm reading |
-| **Neutral** | `#3A4A52` | Deep slate for body text |
+@plugin "daisyui/theme" {
+  name: "lofi";
+  default: false;
+  prefersdark: false;
+  color-scheme: "light";
+  --color-base-100: oklch(98% 0.003 247.858);
+  --color-base-200: oklch(92% 0.006 264.531);
+  --color-base-300: oklch(96% 0.007 247.896);
+  --color-base-content: oklch(0% 0 0);
+  --color-primary: #456981;
+  --color-primary-content: oklch(100% 0 0);
+  --color-secondary: #6B8FA3;
+  --color-secondary-content: oklch(96% 0.003 264.542);
+  --color-accent: #7DB5C8;
+  --color-accent-content: oklch(29% 0.066 243.157);
+  --color-neutral: #2C3840;
+  --color-neutral-content: oklch(100% 0 0);
+  --color-info: oklch(52% 0.105 223.128);
+  --color-info-content: oklch(95% 0.026 236.824);
+  --color-success: oklch(50% 0.118 165.612);
+  --color-success-content: oklch(95% 0.052 163.051);
+  --color-warning: oklch(76% 0.188 70.08);
+  --color-warning-content: oklch(96% 0.059 95.617);
+  --color-error: oklch(50% 0.213 27.518);
+  --color-error-content: oklch(93% 0.032 17.717);
+  --radius-selector: 1rem;
+  --radius-field: 0.5rem;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
 
-Works best for wellness, meditation, healthcare, and lifestyle subscription apps.
-
-***
-## 3. Gilded Slate
-*Premium brands, fintech & luxury digital products*
-
-| Role | HEX | Description |
-|---|---|---|
-| **Primary** | `#3E5260` | Darker, more refined version of the base |
-| **Secondary** | `#8B7D72` | Warm taupe — bridges the cool primary with warm tones |
-| **Accent** | `#C9A96E` | Muted gold — premium without being flashy |
-| **Background** | `#F6F1EB` | Warm linen — sophisticated and tactile |
-| **Neutral** | `#2E3D47` | Dark, legible text with a cool undertone |
-
-Works best for fintech products, luxury e-commerce, portfolio sites, or any brand that needs to convey trust and prestige.
-
-***
-## 4. Ocean Dusk
-*Analytics platforms, developer tools & data visualization*
-
-| Role | HEX | Description |
-|---|---|---|
-| **Primary** | `#495A65` | Base color — precise and structural |
-| **Secondary** | `#5C7A8A` | Richer blue-gray, deepens the palette subtly |
-| **Accent** | `#4A9E8C` | Muted teal — provides the clearest contrast of all palettes |
-| **Background** | `#F4F6F5` | Barely-cool white — clean and neutral |
-| **Neutral** | `#2A3D4A` | Strong dark tone for data labels and UI text |
-
-Works best for developer dashboards, analytics tools, documentation sites, and SaaS products requiring strong data legibility.
-
-***
-## 5. Terracotta Dusk
-*Editorial, lifestyle brands & creative agencies*
-
-| Role | HEX | Description |
-|---|---|---|
-| **Primary** | `#495A65` | The blue-gray base as a stabilizing anchor |
-| **Secondary** | `#7A8F96` | Lighter cool-gray — expands the tonal range softly |
-| **Accent** | `#B5705A` | Muted terracotta — earthy and warm without overshooting |
-| **Background** | `#F7F2ED` | Warm peach-beige — organic and inviting |
-| **Neutral** | `#333D42` | Soft-black neutral, perfect for editorial typography |
-
-Works best for creative agency websites, editorial platforms, food & lifestyle apps, and brand identity systems seeking character.
-
-***
-## Quick Selection Guide
-| Palette | Best Fit | Warmth | Accent Contrast |
-|---|---|---|---|
-| Slate Mist | SaaS / Productivity | Neutral | Low–Medium |
-| Nordic Fog | Wellness / Health | Warm | Low |
-| Gilded Slate | Fintech / Luxury | Warm | Medium |
-| Ocean Dusk | Analytics / Dev Tools | Cool | High |
-| Terracotta Dusk | Editorial / Lifestyle | Warm | Medium–High |
