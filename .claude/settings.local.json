@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm cache:*)",
+      "Bash(curl -s \"http://localhost:3000/venue-builder\")",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

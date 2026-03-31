@@ -1,26 +1,68 @@
 @import "tailwindcss";
 
+@theme {
+  --color-noir-primary: #456981;
+  --color-noir-primary-dark: #3D4F59;
+  --color-noir-secondary: #6B8FA3;
+  --color-noir-accent: #7DB5C8;
+  --color-noir-bg: #F5F4F0;
+  --color-noir-neutral: #2C3840;
+  --color-noir-border: #D8E2E8;
+  --color-noir-border-subtle: #EDF1F4;
+  --color-noir-surface: #FFFFFF;
+  --color-noir-selection: #7DB5C8;
+  --color-noir-selection-bg: #EAF5F9;
+  --color-noir-canvas-bg: #F5F4F0;
+  --color-noir-dot-grid: #C5D0D8;
+  --color-noir-text-primary: #2C3840;
+  --color-noir-text-secondary: #6B8FA3;
+  --color-noir-text-muted: #9AB3C0;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #F5F4F0;
+  --foreground: #2C3840;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Panel slide animations */
+.panel-slide-enter {
+  transform: translateX(100%);
+}
+.panel-slide-active {
+  transform: translateX(0);
+  transition: transform 200ms ease-out;
+}
+
+/* Toast animations */
+.toast-enter {
+  opacity: 0;
+  transform: translateX(20px);
+}
+.toast-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: all 200ms ease-out;
+}
+
+/* Floating editor */
+.floating-enter {
+  opacity: 0;
+  transform: scale(0.95);
+}
+.floating-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: all 150ms ease-out;
+}
+
+/* Prevent text selection during canvas drag */
+.canvas-area {
+  user-select: none;
+  -webkit-user-select: none;
 }
