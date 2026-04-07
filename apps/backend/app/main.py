@@ -164,11 +164,12 @@ app.add_middleware(LoggingMiddleware)
 # -------------------------------------------------
 # API Routes
 # -------------------------------------------------
-from app.api.v1.routes import auth_routes, user_routes, admin_routes
+from app.api.v1.routes import auth_routes, user_routes, admin_routes, noir_routes
 
 app.include_router(auth_routes.router, prefix=settings.API_V1_STR)
 app.include_router(user_routes.router, prefix=settings.API_V1_STR)
 app.include_router(admin_routes.router, prefix=settings.API_V1_STR)
+app.include_router(noir_routes.router, prefix=settings.API_V1_STR)
 
 
 # -------------------------------------------------

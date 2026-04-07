@@ -16,7 +16,7 @@ aiosqlite>=0.20.0
 redis[hiredis]>=5.0.0
 
 # Validation & Settings
-pydantic>=2.10.0
+pydantic[email]>=2.10.0
 pydantic-settings>=2.6.0
 
 # Security
@@ -48,7 +48,7 @@ pytest>=8.3.0
 pytest-asyncio>=0.24.0
 pytest-cov>=6.0.0
 
-# Database Drivers (uncomment as needed)
-# psycopg2-binary>=2.9.10  # Sync PostgreSQL (for Alembic if needed)
+# Database Drivers
+psycopg2-binary>=2.9.10  # Sync PostgreSQL (for Alembic and general SQL execution)
 # mysql-connector-python>=9.1.0  # Sync MySQL
 aiomysql>=0.2.0  # Async MySQL (remove if not using MySQL)

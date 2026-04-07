@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     # Security - General
     # ======================
     SECRET_KEY: str = Field(..., repr=False)
+    SUPABASE_JWT_SECRET: Optional[str] = Field(default=None, repr=False)
 
     @field_validator("SECRET_KEY")
     @classmethod
@@ -47,6 +48,7 @@ class Settings(BaseSettings):
     # Authentication Settings
     # ======================
     ENABLE_LOCAL_AUTH: bool = True
+    ENABLE_SUPABASE_AUTH: bool = False
     ENABLE_OAUTH2: bool = False
     OAUTH2_AUTO_PROVISION: bool = True
     OAUTH2_DEFAULT_ROLE: str = "user"
