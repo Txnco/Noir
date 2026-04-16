@@ -5,6 +5,7 @@ Pydantic models for user-related requests and responses.
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
 from datetime import datetime
+from uuid import UUID
 
 
 # ======================
@@ -55,7 +56,7 @@ class RoleOut(BaseModel):
 
 class UserOut(UserBase):
     """User output schema (safe for API responses)."""
-    id: int
+    id: UUID
     is_active: bool = True
     is_verified: bool = False
     created_at: Optional[datetime] = None
@@ -109,6 +110,6 @@ class AssignRolesRequest(BaseModel):
 
 class UserRolesResponse(BaseModel):
     """Response showing user's roles."""
-    user_id: int
+    user_id: UUID
     roles: List[RoleOut]
     message: str = "Roles updated successfully"

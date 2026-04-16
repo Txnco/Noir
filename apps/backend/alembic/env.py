@@ -14,11 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.core.config import settings
 
 # Import all models to ensure they're registered with Base.metadata
-from app.models.base import Base
-from app.models.user import User
-from app.models.role import Role
-from app.models.permission import Permission
-from app.models.audit import AuditLog
+from app.models import Base, User, Role, Permission, AuditLog, Organization, Venue, VenueLayout, Event, EventOccurrence, EventTier, OccurrencePackage, Ticket
 
 # Alembic Config object
 config = context.config

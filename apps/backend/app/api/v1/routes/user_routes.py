@@ -4,6 +4,7 @@ CRUD operations for user management with RBAC protection.
 """
 from typing import Optional
 from math import ceil
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -110,7 +111,7 @@ async def update_current_user_profile(
 
 @router.get("/{user_id}", response_model=UserDetail)
 async def get_user(
-    user_id: int,
+    user_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions("users:read"))
 ):
@@ -159,7 +160,7 @@ async def create_user(
     )
 
     db.add(new_user)
-    await db.flush()
+    await db.commit()
     await db.refresh(new_user)
 
     return UserOut.model_validate(new_user)
@@ -167,7 +168,7 @@ async def create_user(
 
 @router.patch("/{user_id}", response_model=UserOut)
 async def update_user(
-    user_id: int,
+    user_id: UUID,
     update_data: UserUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions("users:update"))
@@ -212,7 +213,7 @@ async def update_user(
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
-    user_id: int,
+    user_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions("users:delete"))
 ):
@@ -242,7 +243,7 @@ async def delete_user(
 # ======================
 @router.get("/{user_id}/roles", response_model=UserRolesResponse)
 async def get_user_roles(
-    user_id: int,
+    user_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions("users:read", "roles:read"))
 ):
@@ -266,7 +267,7 @@ async def get_user_roles(
 
 @router.put("/{user_id}/roles", response_model=UserRolesResponse)
 async def assign_user_roles(
-    user_id: int,
+    user_id: UUID,
     request: AssignRolesRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions("users:update", "roles:update"))

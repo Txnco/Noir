@@ -36,6 +36,8 @@ async def lifespan(app: FastAPI):
     auth_modes = []
     if settings.ENABLE_LOCAL_AUTH:
         auth_modes.append("JWT")
+    if settings.ENABLE_SUPABASE_AUTH:
+        auth_modes.append("Supabase")
     if settings.ENABLE_OAUTH2:
         auth_modes.append("OAuth2")
     log.info(f"   Auth: {', '.join(auth_modes) if auth_modes else 'None'}")

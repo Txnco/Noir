@@ -5,6 +5,7 @@ Pydantic models for authentication requests and responses.
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
+from uuid import UUID
 import re
 
 from app.core.config import settings
@@ -241,7 +242,7 @@ class ResendVerificationResponse(BaseModel):
 # ======================
 class CurrentUserResponse(BaseModel):
     """Current user information response."""
-    id: int
+    id: UUID
     firstName: str
     lastName: str
     email: str

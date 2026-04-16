@@ -18,29 +18,40 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.models.user import User
 from app.models.role import Role
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+import secrets
+import bcrypt
+from jose import jwt, JWTError
+# from passlib.context import CryptContext # Deprecated/Broken with new bcrypt
 
-
+...
 # OAuth2 scheme for token extraction
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/auth/login",
     auto_error=True
 )
 
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
 # ======================
 # Password Utilities
 # ======================
 def verify_password(plain: str, hashed: str) -> bool:
-    """Verify a plain password against a hashed password."""
-    return pwd_context.verify(plain, hashed)
+    """Verify a plain password against a hashed password using bcrypt directly."""
+    try:
+        if isinstance(hashed, str):
+            hashed = hashed.encode('utf-8')
+        return bcrypt.checkpw(plain.encode('utf-8'), hashed)
+    except Exception:
+        return False
 
 
 def hash_password(plain: str) -> str:
-    """Hash a plain password using bcrypt."""
-    return pwd_context.hash(plain)
+    """Hash a plain password using bcrypt directly."""
+    salt = bcrypt.gensalt(rounds=12)
+    hashed = bcrypt.hashpw(plain.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
+
 
 
 # ======================
@@ -143,7 +154,7 @@ async def get_current_user(
 
     # Load user with cached RBAC data to prevent over-fetching
     from sqlalchemy.orm import noload
-    stmt = select(User).options(noload(User.roles)).where(User.id == int(sub))
+    stmt = select(User).options(noload(User.roles)).where(User.id == sub)
     result = await db.execute(stmt)
     user = result.scalars().first()
 
@@ -161,7 +172,7 @@ async def get_current_user(
     rbac_data = await cache.get(f"rbac:{sub}")
     if rbac_data is None:
         # Load from DB if not in cache
-        role_stmt = select(Role).join(Role.users).where(User.id == int(sub)).options(selectinload(Role.permissions))
+        role_stmt = select(Role).join(Role.users).where(User.id == sub).options(selectinload(Role.permissions))
         roles = (await db.execute(role_stmt)).scalars().all()
         rbac_data = {
             "roles": [r.name for r in roles],
@@ -172,6 +183,8 @@ async def get_current_user(
     # Attach to user for RBAC service
     user._cached_roles = rbac_data["roles"]
     user._cached_permissions = rbac_data["permissions"]
+
+    return user
 
 async def get_current_active_user(
     current_user: User = Depends(get_current_user)
@@ -214,7 +227,7 @@ async def get_optional_current_user(
 
         # Load user with cached RBAC
         from sqlalchemy.orm import noload
-        stmt = select(User).options(noload(User.roles)).where(User.id == int(sub))
+        stmt = select(User).options(noload(User.roles)).where(User.id == sub)
         result = await db.execute(stmt)
         user = result.scalars().first()
 
@@ -222,7 +235,7 @@ async def get_optional_current_user(
             from app.core.cache import cache
             rbac_data = await cache.get(f"rbac:{sub}")
             if rbac_data is None:
-                role_stmt = select(Role).join(Role.users).where(User.id == int(sub)).options(selectinload(Role.permissions))
+                role_stmt = select(Role).join(Role.users).where(User.id == sub).options(selectinload(Role.permissions))
                 roles = (await db.execute(role_stmt)).scalars().all()
                 rbac_data = {
                     "roles": [r.name for r in roles],

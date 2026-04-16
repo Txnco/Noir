@@ -64,7 +64,7 @@ async def get_current_user(
     if settings.ENABLE_LOCAL_AUTH:
         try:
             from app.core.security.jwt.security import get_current_user as jwt_get_user
-            return await jwt_get_user(creds, db)
+            return await jwt_get_user(token, db)
         except HTTPException as e:
             if not settings.ENABLE_OAUTH2:
                 raise
