@@ -33,14 +33,7 @@ async def lifespan(app: FastAPI):
     log.info(f"{settings.PROJECT_NAME} v{settings.APP_VERSION} starting...")
     log.info(f"   Environment: {settings.ENV}")
 
-    auth_modes = []
-    if settings.ENABLE_LOCAL_AUTH:
-        auth_modes.append("JWT")
-    if settings.ENABLE_SUPABASE_AUTH:
-        auth_modes.append("Supabase")
-    if settings.ENABLE_OAUTH2:
-        auth_modes.append("OAuth2")
-    log.info(f"   Auth: {', '.join(auth_modes) if auth_modes else 'None'}")
+    log.info("   Auth: Supabase")
     log.info(f"   RBAC Enabled: {settings.ENABLE_RBAC}")
     log.info(f"   Debug Mode: {settings.DEBUG}")
 

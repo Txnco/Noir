@@ -76,19 +76,9 @@ async def cleanup_expired_tokens() -> dict:
     """
     logger.info("Cleaning up expired tokens...")
     
-    # In production:
-    # from app.core.database import get_db
-    # from app.models.user import User
-    # from datetime import datetime, timedelta
-    #
-    # async with get_db() as db:
-    #     cutoff = datetime.now(timezone.utc) - timedelta(days=7)
-    #     result = await db.execute(
-    #         User.__table__.update()
-    #         .where(User.password_reset_expires < cutoff)
-    #         .values(password_reset_token=None, password_reset_expires=None)
-    #     )
-    #     await db.commit()
+    # Supabase owns password reset / verification tokens now — this job
+    # would typically clean app-specific ephemeral state (idempotency keys,
+    # one-time links, etc).
     
     return {
         "task": "cleanup_expired_tokens",

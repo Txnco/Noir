@@ -235,3 +235,19 @@ html {
   -webkit-backdrop-filter: blur(24px);
   background: rgba(245, 244, 240, 0.85);
 }
+
+/* ── Toast entrance ── */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.toast-in {
+  animation: toast-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}

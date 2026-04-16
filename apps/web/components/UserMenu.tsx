@@ -1,44 +1,79 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { logoutAction } from "@/lib/auth/actions";
-import type { CurrentUserResponse } from "@/lib/typescript/api-types";
+import { toast } from "@/components/Toaster";
+import { supabaseBrowser } from "@/lib/supabase/client";
+import type { Viewer } from "@/lib/typescript/api-types";
 
 type Props = {
   variant?: "desktop" | "mobile";
   onNavigate?: () => void;
 };
 
-function initialsOf(user: CurrentUserResponse): string {
-  const f = user.firstName?.[0] ?? "";
-  const l = user.lastName?.[0] ?? "";
-  return (f + l).toUpperCase() || user.email[0]?.toUpperCase() || "?";
+function initialsOf(v: Viewer): string {
+  const f = v.firstName?.[0] ?? "";
+  const l = v.lastName?.[0] ?? "";
+  return (f + l).toUpperCase() || v.email?.[0]?.toUpperCase() || "?";
 }
 
 export default function UserMenu({ variant = "desktop", onNavigate }: Props) {
-  const [user, setUser] = useState<CurrentUserResponse | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const [user, setUser] = useState<Viewer | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [open, setOpen] = useState(false);
+  const [pendingLogout, startLogout] = useTransition();
   const containerRef = useRef<HTMLDivElement>(null);
+
+  function handleLogout() {
+    startLogout(async () => {
+      const result = await logoutAction();
+      // Also sign out in-browser so onAuthStateChange fires and UI updates
+      // even if the pathname stays the same after redirect.
+      await supabaseBrowser().auth.signOut();
+      setUser(null);
+      onNavigate?.();
+      if (result.status === "success") {
+        toast.success("Odjavljen si", result.message);
+        router.replace(result.redirectTo);
+        router.refresh();
+      } else if (result.status === "error") {
+        toast.error("Odjava nije uspjela", result.error);
+      }
+    });
+  }
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/me", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : { user: null }))
-      .then((data) => {
+
+    async function loadUser() {
+      try {
+        const r = await fetch("/api/me", { cache: "no-store" });
+        const data = r.ok ? await r.json() : { viewer: null };
         if (!cancelled) {
-          setUser(data.user ?? null);
+          setUser(data.viewer ?? null);
           setLoaded(true);
         }
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) setLoaded(true);
-      });
+      }
+    }
+
+    loadUser();
+
+    const supabase = supabaseBrowser();
+    const { data: sub } = supabase.auth.onAuthStateChange(() => {
+      loadUser();
+    });
+
     return () => {
       cancelled = true;
+      sub.subscription.unsubscribe();
     };
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     if (!open) return;
@@ -94,7 +129,8 @@ export default function UserMenu({ variant = "desktop", onNavigate }: Props) {
   }
 
   const initials = initialsOf(user);
-  const fullName = `${user.firstName} ${user.lastName}`.trim() || user.email;
+  const fullName =
+    `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || user.email || "";
 
   if (variant === "mobile") {
     return (
@@ -108,15 +144,14 @@ export default function UserMenu({ variant = "desktop", onNavigate }: Props) {
             <p className="truncate text-xs text-text-muted">{user.email}</p>
           </div>
         </div>
-        <form action={logoutAction}>
-          <button
-            type="submit"
-            onClick={onNavigate}
-            className="block w-full rounded-lg px-4 py-3 text-left text-sm font-medium text-text-muted transition-colors hover:bg-surface hover:text-primary"
-          >
-            Odjava
-          </button>
-        </form>
+        <button
+          type="button"
+          onClick={handleLogout}
+          disabled={pendingLogout}
+          className="block w-full rounded-lg px-4 py-3 text-left text-sm font-medium text-text-muted transition-colors hover:bg-surface hover:text-primary disabled:opacity-60"
+        >
+          {pendingLogout ? "Odjavljivanje..." : "Odjava"}
+        </button>
       </div>
     );
   }
@@ -142,24 +177,24 @@ export default function UserMenu({ variant = "desktop", onNavigate }: Props) {
             <p className="truncate text-sm font-semibold text-neutral">{fullName}</p>
             <p className="truncate text-xs text-text-muted">{user.email}</p>
           </div>
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              role="menuitem"
-              className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-text-muted transition-colors hover:bg-surface hover:text-primary"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M9 11l3-3-3-3M12 8H5M5 3H3v10h2"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Odjava
-            </button>
-          </form>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={handleLogout}
+            disabled={pendingLogout}
+            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-text-muted transition-colors hover:bg-surface hover:text-primary disabled:opacity-60"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M9 11l3-3-3-3M12 8H5M5 3H3v10h2"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            {pendingLogout ? "Odjavljivanje..." : "Odjava"}
+          </button>
         </div>
       )}
     </div>

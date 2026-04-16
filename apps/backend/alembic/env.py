@@ -14,7 +14,22 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.core.config import settings
 
 # Import all models to ensure they're registered with Base.metadata
-from app.models import Base, User, Role, Permission, AuditLog, Organization, Venue, VenueLayout, Event, EventOccurrence, EventTier, OccurrencePackage, Ticket
+from app.models import (
+    Base,
+    AuditLog,
+    Profile,
+    UserPlatformRole,
+    OrganizationMember,
+    UserPreference,
+    Organization,
+    Venue,
+    VenueLayout,
+    Event,
+    EventOccurrence,
+    EventTier,
+    OccurrencePackage,
+    Ticket,
+)
 
 # Alembic Config object
 config = context.config
@@ -26,8 +41,12 @@ if config.config_file_name is not None:
 # Target metadata for autogenerate support
 target_metadata = Base.metadata
 
-# Override sqlalchemy.url with the sync DATABASE_URL from settings
-config.set_main_option("sqlalchemy.url", settings.sync_database_url)
+# Override sqlalchemy.url with the sync DATABASE_URL from settings.
+# ConfigParser treats `%` as interpolation syntax, so percent-encoded
+# characters in the password (e.g. %21) must be escaped as `%%`.
+config.set_main_option(
+    "sqlalchemy.url", settings.sync_database_url.replace("%", "%%")
+)
 
 
 def run_migrations_offline() -> None:

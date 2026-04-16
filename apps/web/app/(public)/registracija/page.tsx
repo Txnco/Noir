@@ -1,18 +1,34 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import GoogleButton from "@/components/GoogleButton";
-import { registerAction, type AuthState } from "@/lib/auth/actions";
-
-const initialState: AuthState = { error: null };
+import { toast } from "@/components/Toaster";
+import { registerAction } from "@/lib/auth/actions";
+import { IDLE, type AuthState } from "@/lib/auth/types";
+import { supabaseBrowser } from "@/lib/supabase/client";
 
 export default function RegistracijaPage() {
-  const [state, formAction, pending] = useActionState(registerAction, initialState);
+  const router = useRouter();
+  const [state, formAction, pending] = useActionState<AuthState, FormData>(
+    registerAction,
+    IDLE,
+  );
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (state.status === "success") {
+      toast.success("Račun kreiran", state.message);
+      router.replace(state.redirectTo);
+      router.refresh();
+    } else if (state.status === "error") {
+      toast.error("Registracija nije uspjela", state.error);
+    }
+  }, [state, router]);
 
   // ── password strength meter ──
   const strength = useMemo(() => {
@@ -36,17 +52,23 @@ export default function RegistracijaPage() {
   async function handleGoogle() {
     setGoogleError(null);
     setGoogleLoading(true);
-    try {
-      // TODO: integrate Google OAuth in next step
-      await new Promise((r) => setTimeout(r, 500));
-    } catch {
-      setGoogleError("Greška kod Google registracije. Pokušaj ponovno.");
-    } finally {
+    const supabase = supabaseBrowser();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) {
+      const msg = "Greška kod Google prijave. Pokušaj ponovno.";
+      setGoogleError(msg);
+      toast.error("Google prijava", msg);
       setGoogleLoading(false);
     }
+    // on success, Supabase redirects — no need to unset loading
   }
 
-  const error = state.error ?? googleError;
+  const error = (state.status === "error" ? state.error : null) ?? googleError;
 
   return (
     <div className="noise-bg relative min-h-screen overflow-hidden">
@@ -139,7 +161,7 @@ export default function RegistracijaPage() {
             <div className="animate-fade-up delay-100 mt-4 rounded-2xl border border-border bg-surface-white p-5 shadow-sm md:p-6">
               {/* Google */}
               <GoogleButton
-                label="Registriraj se s Googleom"
+                label="Nastavi s Google računom"
                 onClick={handleGoogle}
                 loading={googleLoading}
               />
@@ -333,6 +355,14 @@ export default function RegistracijaPage() {
                 {error && (
                   <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     {error}
+                    {state.status === "error" && state.code === "email_exists" && (
+                      <Link
+                        href="/prijava"
+                        className="mt-1 block font-semibold text-red-800 underline underline-offset-2 hover:text-red-900"
+                      >
+                        Prijavi se →
+                      </Link>
+                    )}
                   </div>
                 )}
 

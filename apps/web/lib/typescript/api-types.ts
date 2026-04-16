@@ -184,17 +184,52 @@ export interface ResendVerificationResponse {
   message?: string;
 }
 
+export interface ProfileOut {
+  id: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  avatar_url?: string | null;
+  city?: string | null;
+  phone?: string | null;
+  claimed_at?: string | null;
+  created_at: string;
+}
+
+export interface ProfileUpdate {
+  first_name?: string | null;
+  last_name?: string | null;
+  avatar_url?: string | null;
+  city?: string | null;
+  phone?: string | null;
+}
+
+export interface OrgMembershipOut {
+  org_id: string;
+  role: "owner" | "admin" | "staff";
+  is_active: boolean;
+}
+
 export interface CurrentUserResponse {
   id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  is_active: boolean;
-  is_verified: boolean;
-  roles: string[];
-  permissions: string[];
-  created_at: string;
-  last_login?: string | null;
+  email?: string | null;
+  email_verified: boolean;
+  profile: ProfileOut;
+  platform_role: "admin" | "staff" | "user";
+  memberships: OrgMembershipOut[];
+}
+
+/**
+ * Client-safe viewer shape exposed via /api/me. Only the fields a
+ * header/menu actually needs to render. Authorization (platform_role,
+ * memberships) stays server-side — use getCurrentUser() in server
+ * components if you need to gate UI on role.
+ */
+export interface Viewer {
+  id: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  avatarUrl: string | null;
 }
 
 // API Response wrapper types
