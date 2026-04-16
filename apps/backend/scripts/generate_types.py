@@ -30,6 +30,7 @@ PYTHON_TO_TYPESCRIPT: Dict[str, str] = {
     "date": "string",
     "time": "string",
     "UUID": "string",
+    "EmailStr": "string",
     "Any": "any",
     "None": "null",
     "NoneType": "null",

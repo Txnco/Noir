@@ -1,54 +1,32 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import GoogleButton from "@/components/GoogleButton";
+import { loginAction, type AuthState } from "@/lib/auth/actions";
+
+const initialState: AuthState = { error: null };
 
 export default function PrijavaPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [state, formAction, pending] = useActionState(loginAction, initialState);
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(true);
-  const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-
-    if (!email || !password) {
-      setError("Unesi email i lozinku.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // TODO: integrate Supabase signInWithPassword
-      // const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      await new Promise((r) => setTimeout(r, 700));
-      console.log("Prijava:", { email, remember });
-    } catch {
-      setError("Pogrešan email ili lozinka.");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [googleError, setGoogleError] = useState<string | null>(null);
 
   async function handleGoogle() {
-    setError(null);
+    setGoogleError(null);
     setGoogleLoading(true);
     try {
-      // TODO: integrate Supabase signInWithOAuth({ provider: "google" })
-      // await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/auth/callback` } });
-      await new Promise((r) => setTimeout(r, 700));
-      console.log("Google prijava");
+      // TODO: integrate Google OAuth in next step
+      await new Promise((r) => setTimeout(r, 500));
     } catch {
-      setError("Greška kod Google prijave. Pokušaj ponovno.");
+      setGoogleError("Greška kod Google prijave. Pokušaj ponovno.");
     } finally {
       setGoogleLoading(false);
     }
   }
+
+  const error = state.error ?? googleError;
 
   return (
     <div className="noise-bg relative min-h-screen overflow-hidden">
@@ -98,7 +76,7 @@ export default function PrijavaPage() {
               </div>
 
               {/* form */}
-              <form onSubmit={handleSubmit} className="space-y-3">
+              <form action={formAction} className="space-y-3">
                 <div>
                   <label
                     htmlFor="email"
@@ -108,11 +86,10 @@ export default function PrijavaPage() {
                   </label>
                   <input
                     id="email"
+                    name="email"
                     type="email"
                     autoComplete="email"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="ime@primjer.hr"
                     className="mt-1 w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-neutral placeholder:text-text-muted/70 transition-all focus:border-accent focus:bg-surface-white focus:outline-none focus:ring-4 focus:ring-accent/15"
                   />
@@ -136,11 +113,10 @@ export default function PrijavaPage() {
                   <div className="relative mt-1">
                     <input
                       id="password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
                       autoComplete="current-password"
                       required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 pr-12 text-sm text-neutral placeholder:text-text-muted/70 transition-all focus:border-accent focus:bg-surface-white focus:outline-none focus:ring-4 focus:ring-accent/15"
                     />
@@ -186,8 +162,8 @@ export default function PrijavaPage() {
                 <label className="flex cursor-pointer items-center gap-2 select-none">
                   <input
                     type="checkbox"
-                    checked={remember}
-                    onChange={(e) => setRemember(e.target.checked)}
+                    name="remember"
+                    defaultChecked
                     className="h-4 w-4 rounded border-border text-accent focus:ring-2 focus:ring-accent/30"
                   />
                   <span className="text-sm text-text-muted">Zapamti me</span>
@@ -201,10 +177,10 @@ export default function PrijavaPage() {
 
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={pending}
                   className="mt-1 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition-all hover:bg-neutral hover:shadow-xl hover:shadow-primary/25 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {loading ? (
+                  {pending ? (
                     <>
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                       Prijavljivanje...

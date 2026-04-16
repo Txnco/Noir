@@ -2,6 +2,7 @@
 
 import { useState, useEffect, type ReactNode } from "react";
 import Link from "next/link";
+import UserMenu from "@/components/UserMenu";
 
 interface NavLink {
   label: string;
@@ -68,18 +69,13 @@ export default function Navbar({
 
         {/* Desktop CTA */}
         <div className="hidden items-center gap-3 md:flex">
-          <Link
-            href="/prijava"
-            className="text-sm font-medium text-text-muted transition-colors hover:text-primary"
-          >
-            Prijava
-          </Link>
           <a
             href={cta.href}
             className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-neutral hover:shadow-md active:scale-[0.97]"
           >
             {cta.label}
           </a>
+          <UserMenu variant="desktop" />
         </div>
 
         {/* Mobile hamburger */}
@@ -123,13 +119,6 @@ export default function Navbar({
               </a>
             ))}
             <div className="mt-2 flex flex-col gap-2 border-t border-border pt-3">
-              <Link
-                href="/prijava"
-                onClick={() => setMobileOpen(false)}
-                className="block rounded-lg px-4 py-3 text-center text-sm font-medium text-text-muted transition-colors hover:bg-surface hover:text-primary"
-              >
-                Prijava
-              </Link>
               <a
                 href={cta.href}
                 onClick={() => setMobileOpen(false)}
@@ -137,6 +126,10 @@ export default function Navbar({
               >
                 {cta.label}
               </a>
+              <UserMenu
+                variant="mobile"
+                onNavigate={() => setMobileOpen(false)}
+              />
             </div>
           </div>
         </div>

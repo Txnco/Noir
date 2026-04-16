@@ -1,19 +1,18 @@
 "use client";
 
-import { useState, useMemo, type FormEvent } from "react";
+import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
 import GoogleButton from "@/components/GoogleButton";
+import { registerAction, type AuthState } from "@/lib/auth/actions";
+
+const initialState: AuthState = { error: null };
 
 export default function RegistracijaPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [state, formAction, pending] = useActionState(registerAction, initialState);
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [googleError, setGoogleError] = useState<string | null>(null);
 
   // ── password strength meter ──
   const strength = useMemo(() => {
@@ -34,50 +33,20 @@ export default function RegistracijaPage() {
     "bg-accent",
   ];
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-
-    if (!name.trim()) return setError("Unesi svoje ime.");
-    if (!email) return setError("Unesi email.");
-    if (password.length < 8)
-      return setError("Lozinka mora imati barem 8 znakova.");
-    if (password !== confirmPassword)
-      return setError("Lozinke se ne podudaraju.");
-    if (!acceptTerms)
-      return setError("Moraš prihvatiti uvjete korištenja.");
-
-    setLoading(true);
-    try {
-      // TODO: integrate Supabase signUp
-      // const { data, error } = await supabase.auth.signUp({
-      //   email,
-      //   password,
-      //   options: { data: { full_name: name } },
-      // });
-      await new Promise((r) => setTimeout(r, 700));
-      console.log("Registracija:", { name, email });
-    } catch {
-      setError("Registracija nije uspjela. Pokušaj ponovno.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function handleGoogle() {
-    setError(null);
+    setGoogleError(null);
     setGoogleLoading(true);
     try {
-      // TODO: integrate Supabase signInWithOAuth({ provider: "google" })
-      // await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/auth/callback` } });
-      await new Promise((r) => setTimeout(r, 700));
-      console.log("Google registracija");
+      // TODO: integrate Google OAuth in next step
+      await new Promise((r) => setTimeout(r, 500));
     } catch {
-      setError("Greška kod Google registracije. Pokušaj ponovno.");
+      setGoogleError("Greška kod Google registracije. Pokušaj ponovno.");
     } finally {
       setGoogleLoading(false);
     }
   }
+
+  const error = state.error ?? googleError;
 
   return (
     <div className="noise-bg relative min-h-screen overflow-hidden">
@@ -185,24 +154,42 @@ export default function RegistracijaPage() {
               </div>
 
               {/* form */}
-              <form onSubmit={handleSubmit} className="space-y-3">
-                <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-neutral"
-                  >
-                    Ime i prezime
-                  </label>
-                  <input
-                    id="name"
-                    type="text"
-                    autoComplete="name"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Ana Anić"
-                    className="mt-1 w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-neutral placeholder:text-text-muted/70 transition-all focus:border-accent focus:bg-surface-white focus:outline-none focus:ring-4 focus:ring-accent/15"
-                  />
+              <form action={formAction} className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label
+                      htmlFor="firstName"
+                      className="block text-sm font-medium text-neutral"
+                    >
+                      Ime
+                    </label>
+                    <input
+                      id="firstName"
+                      name="firstName"
+                      type="text"
+                      autoComplete="given-name"
+                      required
+                      placeholder="Ana"
+                      className="mt-1 w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-neutral placeholder:text-text-muted/70 transition-all focus:border-accent focus:bg-surface-white focus:outline-none focus:ring-4 focus:ring-accent/15"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="lastName"
+                      className="block text-sm font-medium text-neutral"
+                    >
+                      Prezime
+                    </label>
+                    <input
+                      id="lastName"
+                      name="lastName"
+                      type="text"
+                      autoComplete="family-name"
+                      required
+                      placeholder="Anić"
+                      className="mt-1 w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-neutral placeholder:text-text-muted/70 transition-all focus:border-accent focus:bg-surface-white focus:outline-none focus:ring-4 focus:ring-accent/15"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -214,11 +201,10 @@ export default function RegistracijaPage() {
                   </label>
                   <input
                     id="email"
+                    name="email"
                     type="email"
                     autoComplete="email"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="ime@primjer.hr"
                     className="mt-1 w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-neutral placeholder:text-text-muted/70 transition-all focus:border-accent focus:bg-surface-white focus:outline-none focus:ring-4 focus:ring-accent/15"
                   />
@@ -234,6 +220,7 @@ export default function RegistracijaPage() {
                   <div className="relative mt-1">
                     <input
                       id="password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
                       autoComplete="new-password"
                       required
@@ -302,18 +289,17 @@ export default function RegistracijaPage() {
 
                 <div>
                   <label
-                    htmlFor="confirmPassword"
+                    htmlFor="password_confirm"
                     className="block text-sm font-medium text-neutral"
                   >
                     Potvrdi lozinku
                   </label>
                   <input
-                    id="confirmPassword"
+                    id="password_confirm"
+                    name="password_confirm"
                     type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
                     required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Ponovi lozinku"
                     className="mt-1 w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-neutral placeholder:text-text-muted/70 transition-all focus:border-accent focus:bg-surface-white focus:outline-none focus:ring-4 focus:ring-accent/15"
                   />
@@ -322,8 +308,7 @@ export default function RegistracijaPage() {
                 <label className="flex cursor-pointer items-start gap-2 select-none">
                   <input
                     type="checkbox"
-                    checked={acceptTerms}
-                    onChange={(e) => setAcceptTerms(e.target.checked)}
+                    name="acceptTerms"
                     className="mt-0.5 h-4 w-4 rounded border-border text-accent focus:ring-2 focus:ring-accent/30"
                   />
                   <span className="text-xs leading-snug text-text-muted">
@@ -353,10 +338,10 @@ export default function RegistracijaPage() {
 
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={pending}
                   className="mt-1 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition-all hover:bg-neutral hover:shadow-xl hover:shadow-primary/25 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {loading ? (
+                  {pending ? (
                     <>
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                       Kreiranje računa...
