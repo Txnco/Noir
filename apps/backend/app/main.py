@@ -98,14 +98,13 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.APP_VERSION,
     description="""
-## JetApi - FastAPI Boilerplate Framework
+## Noir API - Event Platform Backend
 
-A production-ready FastAPI boilerplate with:
--  **JWT / OAuth2 Authentication** - Configurable auth system
+A production-ready FastAPI backend for the Noir Event Platform featuring:
+-  **Supabase Auth Integration** - Consistent user profiles and metadata syncing
 -  **RBAC** - Role-Based Access Control
 -  **Redis Caching** - L1 in-memory + L2 Redis
--  **Rate Limiting** - Redis-backed sliding window
--  **Database Migrations** - Alembic integration
+-  **Event Management** - Organizations, Venues, and Events
 -  **Async PostgreSQL** - asyncpg with connection pooling
 -  **Docker Ready** - Compose with Redis + Nginx
     """,

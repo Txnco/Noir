@@ -25,10 +25,14 @@ class ProfileOut(BaseModel):
     id: UUID
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    email: Optional[str] = None
     avatar_url: Optional[str] = None
     city: Optional[str] = None
     phone: Optional[str] = None
+    app_metadata: dict = {}
+    user_metadata: dict = {}
     claimed_at: Optional[datetime] = None
+    last_login: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
 

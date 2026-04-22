@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     # ======================
     # Core Settings
     # ======================
-    PROJECT_NAME: str = "JetApi Boilerplate"
+    PROJECT_NAME: str = "Noir API"
     APP_VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     ENV: Literal["dev", "staging", "prod"] = "dev"
@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = Field(..., repr=False)
     SUPABASE_JWT_SECRET: str = Field(..., repr=False)
     SUPABASE_URL: Optional[str] = None
+    SUPABASE_ANON_KEY: Optional[str] = Field(default=None, repr=False)
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = Field(default=None, repr=False)
 
     @field_validator("SECRET_KEY")

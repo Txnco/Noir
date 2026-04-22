@@ -95,15 +95,49 @@ async def get_current_profile(
 ) -> Profile:
     """FastAPI dependency: require an existing profile row for the caller.
 
-    The profile is created by the `on_auth_user_created` trigger on
-    `auth.users` insert. If it's missing, either the trigger isn't installed
-    or the user predates it — treat as a server error.
+    The profile is usually created by a Supabase trigger. If it's missing,
+    we auto-provision it here as a fallback. We also sync metadata from the JWT.
     """
     result = await db.execute(select(Profile).where(Profile.id == user.id))
     profile = result.scalars().first()
-    if profile is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Profile row missing for authenticated user",
-        )
+    
+    app_meta = user.raw_claims.get("app_metadata") or {}
+    user_meta = user.raw_claims.get("user_metadata") or {}
+    
+    if profile:
+        # Sync metadata and email if they've changed
+        profile.app_metadata = app_meta
+        profile.user_metadata = user_meta
+        if user.email and profile.email != user.email:
+            profile.email = user.email
+        
+        await db.flush()
+        return profile
+
+    # Auto-provision fallback
+    full_name = user_meta.get("full_name") or user_meta.get("name", "")
+    first_name = user_meta.get("first_name") or ""
+    last_name = user_meta.get("last_name") or ""
+    
+    if not first_name and full_name:
+        parts = full_name.split(" ", 1)
+        first_name = parts[0]
+        last_name = parts[1] if len(parts) > 1 else ""
+
+    if not first_name and user.email:
+        first_name = user.email.split("@")[0]
+
+    profile = Profile(
+        id=user.id,
+        first_name=first_name,
+        last_name=last_name,
+        email=user.email,
+        app_metadata=app_meta,
+        user_metadata=user_meta,
+        claimed_at=datetime.now(timezone.utc)
+    )
+    db.add(profile)
+    await db.flush()
+    await db.refresh(profile)
+    
     return profile

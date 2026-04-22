@@ -1,105 +1,128 @@
 """
-Auth routes.
+Auth Routes for Noir API.
 
-Sign-in / sign-up / password-reset / email-verification are handled by
-Supabase Auth directly from the client (see apps/web/lib/auth/actions.ts).
-The only endpoint we expose here is `/auth/me` — it returns the caller's
-profile, platform role, and org memberships in a single hop so the
-frontend does not have to stitch them together.
+These routes handle session information and profile retrieval for the
+authenticated user. Actual login/signup is handled via Supabase direct.
 """
-from fastapi import APIRouter, Depends
-from sqlalchemy import select
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
 
+from app.core.config import settings
 from app.core.database import get_db
-from app.core.security import CurrentUser, get_current_user
-from app.models.profile import OrganizationMember, UserPlatformRole, Profile
-from app.schemas.auth import (
-    CurrentUserResponse,
-    OrgMembershipOut,
-    ProfileOut,
-    ProfileUpdate,
+from app.core.security import (
+    CurrentUser, 
+    get_current_user, 
+    get_current_profile
 )
+from app.services.rbac import get_platform_role, get_org_roles
+from app.schemas.auth import (
+    CurrentUserResponse, 
+    OrgMembershipOut, 
+    ProfileOut,
+    LoginRequest,
+    SignupRequest,
+    AuthTokenResponse
+)
+from app.models.profile import Profile
 
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
-
-
-async def _load_current(user: CurrentUser, db: AsyncSession) -> CurrentUserResponse:
-    profile = (
-        await db.execute(select(Profile).where(Profile.id == user.id))
-    ).scalars().first()
-
-    if profile is None:
-        profile = Profile(id=user.id)
-        db.add(profile)
-        await db.commit()
-        await db.refresh(profile)
-
-    platform_role = (
-        await db.execute(
-            select(UserPlatformRole.role).where(UserPlatformRole.user_id == user.id)
+@router.post("/login", response_model=AuthTokenResponse)
+async def login(payload: LoginRequest):
+    """
+    Log in using email and password via Supabase.
+    """
+    if not settings.SUPABASE_URL or not settings.SUPABASE_ANON_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Supabase is not properly configured"
         )
-    ).scalar() or "user"
-
-    memberships_rows = (
-        await db.execute(
-            select(OrganizationMember).where(OrganizationMember.user_id == user.id)
+        
+    url = f"{settings.SUPABASE_URL}/auth/v1/token?grant_type=password"
+    headers = {
+        "apikey": settings.SUPABASE_ANON_KEY,
+        "Content-Type": "application/json"
+    }
+    data = {
+        "email": payload.email,
+        "password": payload.password
+    }
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, json=data, headers=headers)
+        
+    if response.status_code != 200:
+        error_detail = response.json().get("error_description") or response.json().get("msg") or "Login failed"
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=error_detail
         )
-    ).scalars().all()
+        
+    return response.json()
 
+@router.post("/signup", status_code=status.HTTP_201_CREATED)
+async def signup(payload: SignupRequest):
+    """
+    Sign up a new user via Supabase.
+    """
+    if not settings.SUPABASE_URL or not settings.SUPABASE_ANON_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Supabase is not properly configured"
+        )
+        
+    url = f"{settings.SUPABASE_URL}/auth/v1/signup"
+    headers = {
+        "apikey": settings.SUPABASE_ANON_KEY,
+        "Content-Type": "application/json"
+    }
+    data = {
+        "email": payload.email,
+        "password": payload.password,
+        "data": {
+            "firstName": payload.firstName,
+            "lastName": payload.lastName
+        }
+    }
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, json=data, headers=headers)
+        
+    if response.status_code not in (200, 201):
+        error_detail = response.json().get("msg") or "Signup failed"
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=error_detail
+        )
+        
+    return {"message": "Signup successful. Please check your email for verification."}
+
+@router.get("/me", response_model=CurrentUserResponse)
+async def get_me(
+    user: CurrentUser = Depends(get_current_user),
+    profile: Profile = Depends(get_current_profile),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Returns the current authenticated user's identity, profile, and roles.
+    This is the main entry point for the frontend to know "who is logged in".
+    """
+    platform_role = await get_platform_role(db, user.id)
+    org_memberships = await get_org_roles(db, user.id)
+    
+    # Format org memberships for the response
+    memberships = [
+        OrgMembershipOut(org_id=org_id, role=role, is_active=True) 
+        for org_id, role in org_memberships.items()
+    ]
+    
     return CurrentUserResponse(
         id=user.id,
         email=user.email,
         email_verified=user.email_verified,
         profile=ProfileOut.model_validate(profile),
         platform_role=platform_role,
-        memberships=[
-            OrgMembershipOut(org_id=m.org_id, role=m.role, is_active=m.is_active)
-            for m in memberships_rows
-        ],
+        memberships=memberships
     )
-
-
-@router.get("/me", response_model=CurrentUserResponse)
-async def get_me(
-    user: CurrentUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Return the authenticated caller's profile + roles.
-
-    Identity comes from the Supabase JWT; `profiles` is the single source
-    of truth for name/avatar/etc. The row is created by the
-    `on_auth_user_created` trigger on `auth.users` insert — if it's missing
-    here we self-heal with a blank row so the frontend isn't wedged.
-    """
-    return await _load_current(user, db)
-
-
-@router.patch("/me", response_model=CurrentUserResponse)
-async def update_me(
-    payload: ProfileUpdate,
-    user: CurrentUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Update the caller's own profile fields.
-
-    This is the only write path for profile data — `auth.users.raw_user_meta_data`
-    is ignored after signup, so all subsequent name changes flow through here.
-    """
-    profile = (
-        await db.execute(select(Profile).where(Profile.id == user.id))
-    ).scalars().first()
-
-    if profile is None:
-        profile = Profile(id=user.id)
-        db.add(profile)
-
-    for field, value in payload.model_dump(exclude_unset=True).items():
-        setattr(profile, field, value)
-
-    await db.commit()
-    return await _load_current(user, db)
-
-
-__all__ = ["router"]

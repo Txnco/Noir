@@ -49,3 +49,28 @@ class CurrentUserResponse(BaseModel):
     profile: ProfileOut
     platform_role: str  # admin | staff | user
     memberships: List[OrgMembershipOut] = []
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class SignupRequest(BaseModel):
+    email: EmailStr
+    password: str
+    firstName: str
+    lastName: str
+
+
+class UserShort(BaseModel):
+    id: UUID
+    email: EmailStr
+
+
+class AuthTokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    refresh_token: str
+    user: UserShort

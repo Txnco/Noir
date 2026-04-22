@@ -12,7 +12,7 @@ We never write to auth.users from Python — Supabase owns it. profiles is
 populated by the `on_auth_user_created` trigger.
 """
 from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Date, Text, DECIMAL, Integer, Enum, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy.dialects.postgresql import UUID, ARRAY, JSONB
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 import uuid
@@ -27,13 +27,20 @@ class Profile(Base):
     id = Column(UUID(as_uuid=True), primary_key=True)
     first_name = Column(String(100), nullable=True)
     last_name = Column(String(100), nullable=True)
+    email = Column(String(255), unique=True, index=True, nullable=True)
     avatar_url = Column(Text, nullable=True)
     date_of_birth = Column(Date, nullable=True)
     phone = Column(String(50), nullable=True)
     city = Column(String(100), nullable=True)
     claimed_at = Column(DateTime(timezone=True), nullable=True)
+    
+    # Supabase metadata sync
+    app_metadata = Column(JSONB, nullable=True, default={})
+    user_metadata = Column(JSONB, nullable=True, default={})
+    
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+    last_login = Column(DateTime(timezone=True), nullable=True)
 
     platform_role = relationship("UserPlatformRole", uselist=False, back_populates="profile", lazy="joined")
     memberships = relationship("OrganizationMember", back_populates="profile", lazy="selectin")
