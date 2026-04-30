@@ -38,16 +38,44 @@ class CurrentUser(BaseModel):
     raw_claims: Dict[str, Any] = {}
 
 
+from app.core.logger import get_logger
+log = get_logger("jetapi.auth")
+
 def decode_supabase_token(token: str) -> Dict[str, Any]:
     """Validate and decode a Supabase-issued JWT."""
+    # Handle multi-line PEMs from .env (replace escaped newlines)
+    secret = settings.SUPABASE_JWT_SECRET.replace("\\n", "\n")
+    
+    try:
+        header = jwt.get_unverified_header(token)
+        log.info(f"Incoming JWT Header: {header}")
+    except Exception as e:
+        log.error(f"Failed to read JWT header: {e}")
+
     try:
         return jwt.decode(
             token,
-            settings.SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
-            options={"verify_aud": False},  # Supabase sets aud='authenticated'
+            secret,
+            algorithms=["HS256", "RS256", "ES256"],
+            options={"verify_aud": False},
         )
     except JWTError as exc:
+        # Fallback for HS256 base64 secrets
+        if "-----BEGIN" not in secret:
+            try:
+                import base64
+                padded_secret = secret + "=" * (-len(secret) % 4)
+                decoded_secret = base64.b64decode(padded_secret)
+                return jwt.decode(
+                    token,
+                    decoded_secret,
+                    algorithms=["HS256", "RS256", "ES256"],
+                    options={"verify_aud": False},
+                )
+            except Exception:
+                pass
+        
+        log.error(f"JWT Validation Failed. Error: {exc}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid auth token: {exc}",
