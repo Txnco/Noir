@@ -25,6 +25,25 @@ from app.schemas.noir import (
 
 router = APIRouter(prefix="/noir", tags=["Noir Core"])
 
+@router.get("/test-db")
+async def test_db(db: AsyncSession = Depends(get_db)):
+    """Test database connectivity and profiles table."""
+    try:
+        from app.models.profile import Profile
+        result = await db.execute(select(Profile).limit(1))
+        profile = result.scalars().first()
+        return {
+            "status": "connected",
+            "database": "reachable",
+            "profiles_table": "found",
+            "sample_profile_id": str(profile.id) if profile else None
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "detail": str(e)
+        }
+
 # ======================
 # Events
 # ======================
