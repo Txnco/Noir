@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Reveal from "@/components/Reveal";
 import CheckoutModal from "@/components/CheckoutModal";
+import EventDetailsModal from "@/components/EventDetailsModal";
 
 // ═══════════════ TYPES ═══════════════
 
@@ -61,225 +62,6 @@ const DATE_FILTERS: { id: DateGroup | "all"; label: string }[] = [
   { id: "tomorrow", label: "Sutra" },
   { id: "weekend", label: "Vikend" },
   { id: "week", label: "Ovaj tjedan" },
-];
-
-const EVENTS: EventItem[] = [
-  {
-    id: 1,
-    name: "Neon Nights",
-    venue: "Club Boogaloo",
-    category: "techno",
-    categoryLabel: "Techno",
-    dateLabel: "Danas, 23:00",
-    dateGroup: "today",
-    time: "23:00",
-    price: 8,
-    earlyBird: { soldPct: 82 },
-    tags: ["techno", "club", "dj"],
-    gradient: "linear-gradient(135deg, #1e1b4b 0%, #4338ca 50%, #7c3aed 100%)",
-    attending: 234,
-  },
-  {
-    id: 2,
-    name: "Jazz & Wine večer",
-    venue: "Vintage Industrial Bar",
-    category: "jazz",
-    categoryLabel: "Jazz",
-    dateLabel: "Sutra, 20:00",
-    dateGroup: "tomorrow",
-    time: "20:00",
-    price: 12,
-    tags: ["jazz", "live", "wine"],
-    gradient: "linear-gradient(135deg, #0c4a6e 0%, #075985 50%, #0e7490 100%)",
-    attending: 87,
-  },
-  {
-    id: 3,
-    name: "Student Kviz Liga",
-    venue: "Craft Room",
-    category: "kviz",
-    categoryLabel: "Kviz",
-    dateLabel: "Danas, 19:30",
-    dateGroup: "today",
-    time: "19:30",
-    price: 5,
-    earlyBird: { soldPct: 64 },
-    tags: ["kviz", "students"],
-    gradient: "linear-gradient(135deg, #064e3b 0%, #047857 50%, #0d9488 100%)",
-    attending: 156,
-  },
-  {
-    id: 4,
-    name: "Retro Disco Fever",
-    venue: "Aquarius",
-    category: "party",
-    categoryLabel: "Party",
-    dateLabel: "Pet, 22:00",
-    dateGroup: "weekend",
-    time: "22:00",
-    price: 10,
-    tags: ["disco", "retro", "party"],
-    gradient: "linear-gradient(135deg, #831843 0%, #be185d 50%, #ec4899 100%)",
-    attending: 412,
-  },
-  {
-    id: 5,
-    name: "Stand-up Komedija",
-    venue: "KSET",
-    category: "stand-up",
-    categoryLabel: "Stand-up",
-    dateLabel: "Pet, 20:00",
-    dateGroup: "weekend",
-    time: "20:00",
-    price: 7,
-    earlyBird: { soldPct: 91 },
-    tags: ["komedija", "live"],
-    gradient: "linear-gradient(135deg, #78350f 0%, #d97706 50%, #f59e0b 100%)",
-    attending: 98,
-  },
-  {
-    id: 6,
-    name: "Salsa Night Latino",
-    venue: "Club Boogaloo",
-    category: "dance",
-    categoryLabel: "Dance",
-    dateLabel: "Sub, 21:00",
-    dateGroup: "weekend",
-    time: "21:00",
-    price: 6,
-    tags: ["salsa", "dance", "latino"],
-    gradient: "linear-gradient(135deg, #7f1d1d 0%, #dc2626 50%, #f87171 100%)",
-    attending: 178,
-  },
-  {
-    id: 7,
-    name: "Underground Techno",
-    venue: "Culture Club Revelin",
-    category: "techno",
-    categoryLabel: "Techno",
-    dateLabel: "Sub, 23:30",
-    dateGroup: "weekend",
-    time: "23:30",
-    price: 15,
-    earlyBird: { soldPct: 47 },
-    tags: ["techno", "underground"],
-    gradient: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)",
-    attending: 521,
-  },
-  {
-    id: 8,
-    name: "Acoustic Sessions",
-    venue: "Bacchus Jazz Bar",
-    category: "live",
-    categoryLabel: "Live",
-    dateLabel: "Danas, 21:00",
-    dateGroup: "today",
-    time: "21:00",
-    price: 0,
-    tags: ["acoustic", "live", "free"],
-    gradient: "linear-gradient(135deg, #422006 0%, #92400e 50%, #ea580c 100%)",
-    attending: 64,
-  },
-  {
-    id: 9,
-    name: "Hip Hop Utorak",
-    venue: "Masters Club",
-    category: "hip-hop",
-    categoryLabel: "Hip Hop",
-    dateLabel: "Uto, 22:00",
-    dateGroup: "week",
-    time: "22:00",
-    price: 5,
-    tags: ["hiphop", "rap"],
-    gradient: "linear-gradient(135deg, #18181b 0%, #3f3f46 50%, #71717a 100%)",
-    attending: 142,
-  },
-  {
-    id: 10,
-    name: "Wine Tasting Experience",
-    venue: "Esplanade Hotel",
-    category: "gastro",
-    categoryLabel: "Gastro",
-    dateLabel: "Ned, 19:00",
-    dateGroup: "weekend",
-    time: "19:00",
-    price: 25,
-    earlyBird: { soldPct: 73 },
-    tags: ["wine", "gastro"],
-    gradient: "linear-gradient(135deg, #4c0519 0%, #881337 50%, #be123c 100%)",
-    attending: 32,
-  },
-  {
-    id: 11,
-    name: "Karaoke Open Mic",
-    venue: "Hard Place",
-    category: "party",
-    categoryLabel: "Party",
-    dateLabel: "Sri, 21:00",
-    dateGroup: "week",
-    time: "21:00",
-    price: 0,
-    tags: ["karaoke", "free"],
-    gradient: "linear-gradient(135deg, #4a044e 0%, #86198f 50%, #c026d3 100%)",
-    attending: 89,
-  },
-  {
-    id: 12,
-    name: "Drum & Bass Attack",
-    venue: "Club Boogaloo",
-    category: "techno",
-    categoryLabel: "Techno",
-    dateLabel: "Pet, 23:00",
-    dateGroup: "weekend",
-    time: "23:00",
-    price: 8,
-    tags: ["dnb", "bass"],
-    gradient: "linear-gradient(135deg, #042f2e 0%, #115e59 50%, #14b8a6 100%)",
-    attending: 287,
-  },
-  {
-    id: 13,
-    name: "Indie Night Live",
-    venue: "Močvara",
-    category: "live",
-    categoryLabel: "Live",
-    dateLabel: "Sub, 21:30",
-    dateGroup: "weekend",
-    time: "21:30",
-    price: 6,
-    tags: ["indie", "live", "rock"],
-    gradient: "linear-gradient(135deg, #1c1917 0%, #57534e 50%, #a8a29e 100%)",
-    attending: 134,
-  },
-  {
-    id: 14,
-    name: "House Sessions",
-    venue: "Sax! Club",
-    category: "house",
-    categoryLabel: "House",
-    dateLabel: "Pet, 22:30",
-    dateGroup: "weekend",
-    time: "22:30",
-    price: 7,
-    tags: ["house", "deep"],
-    gradient: "linear-gradient(135deg, #431407 0%, #9a3412 50%, #f97316 100%)",
-    attending: 198,
-  },
-  {
-    id: 15,
-    name: "Latino Vibes Open",
-    venue: "Taboo Club",
-    category: "dance",
-    categoryLabel: "Dance",
-    dateLabel: "Sub, 22:00",
-    dateGroup: "weekend",
-    time: "22:00",
-    price: 8,
-    earlyBird: { soldPct: 55 },
-    tags: ["latino", "dance"],
-    gradient: "linear-gradient(135deg, #500724 0%, #9d174d 50%, #f43f5e 100%)",
-    attending: 167,
-  },
 ];
 
 // ═══════════════ HELPERS ═══════════════
@@ -366,19 +148,21 @@ function CategoryIcon({ category }: { category: EventItem["category"] }) {
 function EventCard({ 
   event, 
   index,
+  onOpenDetails,
   onPurchase
 }: { 
   event: EventItem; 
   index: number;
+  onOpenDetails: (event: EventItem) => void;
   onPurchase: (e: React.MouseEvent, event: EventItem) => void;
 }) {
   return (
     <div
-      className="animate-card-in group relative block overflow-hidden rounded-2xl border border-border bg-surface-white shadow-sm transition-all duration-500 hover:-translate-y-1 hover:border-accent/40 hover:shadow-2xl hover:shadow-primary/10"
+      onClick={() => onOpenDetails(event)}
+      className="animate-card-in group relative block overflow-hidden rounded-2xl border border-border bg-surface-white shadow-sm transition-all duration-500 hover:-translate-y-1 hover:border-accent/40 hover:shadow-2xl hover:shadow-primary/10 cursor-pointer"
       style={{ animationDelay: `${Math.min(index * 60, 600)}ms` }}
     >
-      <a href={`/eventi/${event.id}`} className="block">
-        {/* gradient image area */}
+      {/* gradient image area */}
         <div className="relative h-44 overflow-hidden">
           <div
             className="absolute inset-0 transition-transform duration-700 group-hover:scale-110"
@@ -431,7 +215,6 @@ function EventCard({
             <span>{event.dateLabel}</span>
           </div>
         </div>
-      </a>
       
       {/* CTA Button overlay/below */}
       <div className="px-5 pb-5">
@@ -473,17 +256,89 @@ function EmptyState({ onReset }: { onReset: () => void }) {
 // ═══════════════ PAGE ═══════════════
 
 export default function EventiPage() {
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<CategoryId>("all");
   const [dateFilter, setDateFilter] = useState<DateGroup | "all">("all");
+  
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
+
+  useEffect(() => {
+    async function fetchEvents() {
+      try {
+        setLoading(true);
+        // Using the API endpoint we just updated
+        const res = await fetch("/api/v1/noir/events");
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = await res.json();
+        
+        // Map backend data to UI EventItem
+        const mapped = data.map((ev: any, i: number) => {
+          const date = new Date(ev.occurrence_date);
+          const day = date.toLocaleDateString("hr-HR", { weekday: "short" });
+          const time = date.toLocaleTimeString("hr-HR", { hour: "2-digit", minute: "2-digit" });
+          
+          // Determine date group
+          let dateGroup: DateGroup = "week";
+          const today = new Date();
+          const tomorrow = new Date();
+          tomorrow.setDate(today.getDate() + 1);
+          
+          if (date.toDateString() === today.toDateString()) dateGroup = "today";
+          else if (date.toDateString() === tomorrow.toDateString()) dateGroup = "tomorrow";
+          else if ([5, 6, 0].includes(date.getDay())) dateGroup = "weekend";
+
+          // Predefined gradients for variety
+          const gradients = [
+            "linear-gradient(135deg, #1e1b4b 0%, #4338ca 50%, #7c3aed 100%)",
+            "linear-gradient(135deg, #0c4a6e 0%, #075985 50%, #0e7490 100%)",
+            "linear-gradient(135deg, #064e3b 0%, #047857 50%, #0d9488 100%)",
+            "linear-gradient(135deg, #831843 0%, #be185d 50%, #ec4899 100%)",
+          ];
+
+          return {
+            id: ev.id,
+            name: ev.name,
+            venue: ev.venue_name || "Nepoznata lokacija",
+            description: ev.description,
+            category: "party", // Fallback for now
+            categoryLabel: "Event",
+            dateLabel: `${day.charAt(0).toUpperCase() + day.slice(1)}, ${time}`,
+            dateGroup: dateGroup,
+            time: time,
+            price: Number(ev.min_price) || 0,
+            tags: ev.tags || [],
+            gradient: gradients[i % gradients.length],
+            attending: Math.floor(Math.random() * 200) + 50, // Mock for now
+            min_age: ev.min_age
+          };
+        });
+        
+        setEvents(mapped);
+      } catch (err) {
+        console.error("Error fetching events:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchEvents();
+  }, []);
+
+  const handleOpenDetails = (event: EventItem) => {
+    setSelectedEvent(event);
+    setIsDetailsOpen(true);
+  };
 
   const handlePurchase = (e: React.MouseEvent, event: EventItem) => {
     e.preventDefault();
     e.stopPropagation();
     setSelectedEvent(event);
+    setIsDetailsOpen(false); // Close details if open
     setIsCheckoutOpen(true);
   };
   const searchRef = useRef<HTMLInputElement>(null);
@@ -505,7 +360,7 @@ export default function EventiPage() {
 
   const filteredEvents = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return EVENTS.filter((e) => {
+    return events.filter((e) => {
       if (category !== "all" && e.category !== category) return false;
       if (dateFilter !== "all" && e.dateGroup !== dateFilter) return false;
       if (q) {
@@ -514,7 +369,7 @@ export default function EventiPage() {
       }
       return true;
     });
-  }, [search, category, dateFilter]);
+  }, [search, category, dateFilter, events]);
 
   const resetFilters = () => {
     setSearch("");
@@ -585,7 +440,7 @@ export default function EventiPage() {
           <Reveal variant="fade-up">
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface-white/70 px-4 py-1.5 text-xs font-medium text-text-muted backdrop-blur">
               <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
-              {EVENTS.length} aktivnih evenata u Zagrebu
+              {events.length} aktivnih evenata u Zagrebu
             </div>
           </Reveal>
 
@@ -654,7 +509,7 @@ export default function EventiPage() {
           <div className="mb-8 flex items-center justify-between">
             <div>
               <h2 className="font-display text-xl font-bold text-neutral md:text-2xl">
-                {filteredEvents.length === EVENTS.length
+                {filteredEvents.length === events.length
                   ? "Svi eventi"
                   : `${filteredEvents.length} ${filteredEvents.length === 1 ? "rezultat" : filteredEvents.length < 5 ? "rezultata" : "rezultata"}`}
               </h2>
@@ -673,13 +528,20 @@ export default function EventiPage() {
           </div>
 
           {/* Grid */}
-          {filteredEvents.length > 0 ? (
+          {loading ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-80 animate-pulse rounded-2xl bg-surface-white border border-border" />
+              ))}
+            </div>
+          ) : filteredEvents.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredEvents.map((event, i) => (
                 <EventCard 
                   key={event.id} 
                   event={event} 
                   index={i} 
+                  onOpenDetails={handleOpenDetails}
                   onPurchase={handlePurchase} 
                 />
               ))}
@@ -691,11 +553,22 @@ export default function EventiPage() {
       </section>
 
       {selectedEvent && (
-        <CheckoutModal 
-          isOpen={isCheckoutOpen} 
-          onClose={() => setIsCheckoutOpen(false)} 
-          event={selectedEvent} 
-        />
+        <>
+          <EventDetailsModal
+            isOpen={isDetailsOpen}
+            onClose={() => setIsDetailsOpen(false)}
+            onPurchase={() => {
+              setIsDetailsOpen(false);
+              setIsCheckoutOpen(true);
+            }}
+            event={selectedEvent}
+          />
+          <CheckoutModal 
+            isOpen={isCheckoutOpen} 
+            onClose={() => setIsCheckoutOpen(false)} 
+            event={selectedEvent} 
+          />
+        </>
       )}
 
       <Footer />

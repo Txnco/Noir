@@ -31,6 +31,7 @@ PYTHON_TO_TYPESCRIPT: Dict[str, str] = {
     "time": "string",
     "UUID": "string",
     "EmailStr": "string",
+    "Decimal": "number",
     "Any": "any",
     "None": "null",
     "NoneType": "null",
@@ -63,14 +64,14 @@ def discover_schemas() -> Dict[str, type]:
     schemas = {}
     
     # Import all schema modules
-    from app.schemas import user, auth
+    from app.schemas import user, auth, noir
     try:
         from app.schemas import role, permission
     except ImportError:
         pass
     
     # Collect all BaseModel subclasses
-    for module in [user, auth]:
+    for module in [user, auth, noir]:
         for name, obj in vars(module).items():
             if isinstance(obj, type) and issubclass(obj, BaseModel) and obj is not BaseModel:
                 schemas[name] = obj

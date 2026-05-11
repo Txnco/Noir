@@ -93,6 +93,10 @@ class VenueOut(VenueBase):
 class EventDiscoveryOut(EventBase):
     """Schema for the swipe/discovery feed."""
     id: UUID
+    venue_name: Optional[str] = None
+    min_price: Optional[Decimal] = None
+    occurrence_date: Optional[datetime] = None
+    tags: List[str] = []
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 

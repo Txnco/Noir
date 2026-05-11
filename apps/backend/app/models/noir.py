@@ -137,6 +137,7 @@ class EventOccurrence(Base):
 
     # Relationships
     event = relationship("Event", back_populates="occurrences")
+    venue = relationship("Venue")
     layout = relationship("VenueLayout", back_populates="occurrences")
     tiers = relationship("EventTier", back_populates="occurrence")
     tickets = relationship("Ticket", back_populates="occurrence")

@@ -68,6 +68,18 @@ class UserShort(BaseModel):
     email: EmailStr
 
 
+class Viewer(BaseModel):
+    """
+    Client-safe viewer shape exposed via /api/me. Only the fields a
+    header/menu actually needs to render.
+    """
+    id: UUID
+    email: Optional[str] = None
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
+    avatarUrl: Optional[str] = None
+
+
 class AuthTokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"

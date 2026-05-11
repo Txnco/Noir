@@ -4,11 +4,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from uuid import UUID
+from decimal import Decimal
 
 from app.core.database import get_db
 from app.core.security import CurrentUser, get_current_user
 from app.services.rbac import require_platform_roles, get_org_roles
-from app.models.noir import Event, Organization, Venue
+from app.models.noir import Event, Organization, Venue, EventOccurrence, EventTier
 from app.schemas.noir import (
     EventDiscoveryOut, 
     EventDetailOut, 
@@ -53,14 +54,41 @@ async def list_events(
     org_id: Optional[UUID] = Query(None, description="Filter by organization"),
     db: AsyncSession = Depends(get_db)
 ):
-    """Get a list of events. Defaults to published events."""
-    stmt = select(Event)
+    """Get a list of events with basic discovery info."""
+    # We want to get events with their primary occurrence, venue, and min price
+    stmt = select(Event).options(
+        selectinload(Event.occurrences).selectinload(EventOccurrence.venue),
+        selectinload(Event.occurrences).selectinload(EventOccurrence.tiers)
+    )
+    
     if status:
         stmt = stmt.where(Event.status == status)
     if org_id:
         stmt = stmt.where(Event.organizer_org_id == org_id)
+        
     result = await db.execute(stmt)
-    return result.scalars().all()
+    events = result.scalars().all()
+    
+    # Map to schema manually or via attributes
+    out_events = []
+    for event in events:
+        out_ev = EventDiscoveryOut.model_validate(event)
+        
+        # Get primary occurrence (the earliest one)
+        if event.occurrences:
+            primary = sorted(event.occurrences, key=lambda x: x.start_time)[0]
+            out_ev.venue_name = primary.venue.name if primary.venue else None
+            out_ev.occurrence_date = primary.start_time
+            
+            # Get min price from tiers
+            if primary.tiers:
+                out_ev.min_price = min(t.price for t in primary.tiers)
+            else:
+                out_ev.min_price = Decimal("0.00") if event.is_free else None
+        
+        out_events.append(out_ev)
+        
+    return out_events
 
 @router.get("/events/{event_id}", response_model=EventDetailOut)
 async def get_event(event_id: UUID, db: AsyncSession = Depends(get_db)):
