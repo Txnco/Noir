@@ -28,8 +28,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     curl \
     && rm -rf /var/lib/apt/lists/* \
-    && addgroup --system appgroup \
-    && adduser --system --ingroup appgroup appuser
+    && addgroup --system --gid 1001 appgroup \
+    && adduser --system --uid 1001 --ingroup appgroup --home /home/appuser appuser
 
 # Copy installed packages from builder
 COPY --from=builder /install /usr/local
@@ -37,8 +37,12 @@ COPY --from=builder /install /usr/local
 # Copy application code
 COPY . .
 
-# Create log directory
-RUN mkdir -p logs && chown -R appuser:appgroup /app
+# Create log directory and set permissions
+RUN mkdir -p logs && chown -R appuser:appgroup /app /home/appuser
+
+# Set environment variables
+ENV HOME=/home/appuser
+ENV TMPDIR=/tmp
 
 # Switch to non-root user
 USER appuser
@@ -51,4 +55,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8000/health/live || exit 1
 
 # Run with Gunicorn + Uvicorn workers
-CMD ["gunicorn", "app.main:app", "-c", "gunicorn.conf.py"]
+CMD ["gunicorn", "app.main:app", "-c", "gunicorn.conf.py", "--worker-tmp-dir", "/tmp"]

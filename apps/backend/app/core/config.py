@@ -77,7 +77,7 @@ class Settings(BaseSettings):
     # ======================
     # CORS
     # ======================
-    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+    CORS_ORIGINS: str = "http://localhost"
 
     # ======================
     # Email (optional — Supabase sends auth emails itself)
@@ -100,7 +100,7 @@ class Settings(BaseSettings):
     # ======================
     # Frontend URL
     # ======================
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_URL: str = "http://localhost"
 
     @property
     def cors_origins_list(self) -> list[str]:

@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Reveal from "@/components/Reveal";
+import CheckoutModal from "@/components/CheckoutModal";
 
 // ═══════════════ TYPES ═══════════════
 
@@ -362,108 +363,86 @@ function CategoryIcon({ category }: { category: EventItem["category"] }) {
   return <div className="h-6 w-6">{icons[category]}</div>;
 }
 
-function EventCard({ event, index }: { event: EventItem; index: number }) {
+function EventCard({ 
+  event, 
+  index,
+  onPurchase
+}: { 
+  event: EventItem; 
+  index: number;
+  onPurchase: (e: React.MouseEvent, event: EventItem) => void;
+}) {
   return (
-    <a
-      href={`/eventi/${event.id}`}
+    <div
       className="animate-card-in group relative block overflow-hidden rounded-2xl border border-border bg-surface-white shadow-sm transition-all duration-500 hover:-translate-y-1 hover:border-accent/40 hover:shadow-2xl hover:shadow-primary/10"
       style={{ animationDelay: `${Math.min(index * 60, 600)}ms` }}
     >
-      {/* gradient image area */}
-      <div className="relative h-44 overflow-hidden">
-        <div
-          className="absolute inset-0 transition-transform duration-700 group-hover:scale-110"
-          style={{ background: event.gradient }}
-        />
-        {/* subtle grain overlay */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-30 mix-blend-overlay"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-          }}
-        />
+      <a href={`/eventi/${event.id}`} className="block">
+        {/* gradient image area */}
+        <div className="relative h-44 overflow-hidden">
+          <div
+            className="absolute inset-0 transition-transform duration-700 group-hover:scale-110"
+            style={{ background: event.gradient }}
+          />
+          {/* subtle grain overlay */}
+          <div
+            className="pointer-events-none absolute inset-0 opacity-30 mix-blend-overlay"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+            }}
+          />
 
-        {/* category icon top-left */}
-        <div className="absolute top-4 left-4 flex items-center gap-2 rounded-full bg-black/30 px-3 py-1.5 backdrop-blur-md">
-          <CategoryIcon category={event.category} />
-          <span className="text-xs font-semibold text-white">{event.categoryLabel}</span>
-        </div>
-
-        {/* price badge top-right */}
-        <div className="absolute top-4 right-4 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold text-primary shadow-md backdrop-blur-md">
-          {priceLabel(event.price)}
-        </div>
-
-        {/* early bird ribbon bottom */}
-        {event.earlyBird && (
-          <div className="absolute right-4 bottom-4 left-4">
-            <div className="flex items-center justify-between text-[10px] font-medium text-white/90">
-              <span className="rounded-full bg-accent/90 px-2 py-0.5 font-bold text-white">
-                Early Bird
-              </span>
-              <span>{event.earlyBird.soldPct}% prodano</span>
-            </div>
-            <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-white/20">
-              <div
-                className="h-full rounded-full bg-white"
-                style={{ width: `${event.earlyBird.soldPct}%` }}
-              />
-            </div>
+          {/* category icon top-left */}
+          <div className="absolute top-4 left-4 flex items-center gap-2 rounded-full bg-black/30 px-3 py-1.5 backdrop-blur-md">
+            <CategoryIcon category={event.category} />
+            <span className="text-xs font-semibold text-white">{event.categoryLabel}</span>
           </div>
-        )}
-      </div>
 
-      {/* content */}
-      <div className="p-5">
-        <h3 className="font-display text-lg font-bold leading-tight text-neutral transition-colors group-hover:text-primary">
-          {event.name}
-        </h3>
-
-        <div className="mt-2 flex items-center gap-1.5 text-sm text-text-muted">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M8 14s5-4 5-8a5 5 0 00-10 0c0 4 5 8 5 8z"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
-            <circle cx="8" cy="6" r="1.5" stroke="currentColor" strokeWidth="1.5" />
-          </svg>
-          <span className="truncate">{event.venue}</span>
-        </div>
-
-        <div className="mt-1 flex items-center gap-1.5 text-sm text-text-muted">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M8 4v4l2.5 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          <span>{event.dateLabel}</span>
-        </div>
-
-        <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
-          <div className="flex items-center gap-2 text-xs text-text-muted">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="5" r="3" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M2 14c0-3 2.5-5 6-5s6 2 6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            <span>
-              <span className="font-semibold text-primary">{formatAttending(event.attending)}</span> idu
-            </span>
+          {/* price badge top-right */}
+          <div className="absolute top-4 right-4 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold text-primary shadow-md backdrop-blur-md">
+            {priceLabel(event.price)}
           </div>
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-primary transition-all group-hover:bg-primary group-hover:text-white">
+        </div>
+
+        {/* content */}
+        <div className="p-5">
+          <h3 className="font-display text-lg font-bold leading-tight text-neutral transition-colors group-hover:text-primary">
+            {event.name}
+          </h3>
+
+          <div className="mt-2 flex items-center gap-1.5 text-sm text-text-muted">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
               <path
-                d="M3 8h10M9 4l4 4-4 4"
+                d="M8 14s5-4 5-8a5 5 0 00-10 0c0 4 5 8 5 8z"
                 stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                strokeWidth="1.5"
               />
+              <circle cx="8" cy="6" r="1.5" stroke="currentColor" strokeWidth="1.5" />
             </svg>
-          </span>
+            <span className="truncate">{event.venue}</span>
+          </div>
+
+          <div className="mt-1 flex items-center gap-1.5 text-sm text-text-muted">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M8 4v4l2.5 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <span>{event.dateLabel}</span>
+          </div>
         </div>
+      </a>
+      
+      {/* CTA Button overlay/below */}
+      <div className="px-5 pb-5">
+        <button 
+          onClick={(e) => onPurchase(e, event)}
+          className="w-full rounded-xl bg-neutral py-3 text-xs font-bold uppercase tracking-widest text-white transition-all hover:bg-primary hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98]"
+        >
+          {event.price === 0 ? "Rezerviraj besplatno" : "Kupi kartu"}
+        </button>
       </div>
-    </a>
+    </div>
   );
 }
 
@@ -497,7 +476,16 @@ export default function EventiPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<CategoryId>("all");
   const [dateFilter, setDateFilter] = useState<DateGroup | "all">("all");
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
+
+  const handlePurchase = (e: React.MouseEvent, event: EventItem) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedEvent(event);
+    setIsCheckoutOpen(true);
+  };
   const searchRef = useRef<HTMLInputElement>(null);
 
   // ⌘K / Ctrl+K to focus search
@@ -688,7 +676,12 @@ export default function EventiPage() {
           {filteredEvents.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredEvents.map((event, i) => (
-                <EventCard key={event.id} event={event} index={i} />
+                <EventCard 
+                  key={event.id} 
+                  event={event} 
+                  index={i} 
+                  onPurchase={handlePurchase} 
+                />
               ))}
             </div>
           ) : (
@@ -696,6 +689,14 @@ export default function EventiPage() {
           )}
         </div>
       </section>
+
+      {selectedEvent && (
+        <CheckoutModal 
+          isOpen={isCheckoutOpen} 
+          onClose={() => setIsCheckoutOpen(false)} 
+          event={selectedEvent} 
+        />
+      )}
 
       <Footer />
     </div>

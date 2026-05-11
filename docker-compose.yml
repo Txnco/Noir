@@ -1,0 +1,54 @@
+services:
+  nginx:
+    build:
+      context: ./apps/nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - web
+    restart: always
+
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    environment:
+      # DATABASE_URL should be provided in apps/backend/.env
+      - REDIS_URL=redis://redis:6379/0
+      - FRONTEND_URL=http://localhost
+      - CORS_ORIGINS=http://localhost
+    env_file:
+      - apps/backend/.env
+    tmpfs:
+      - /tmp
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: always
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        - NEXT_PUBLIC_API_URL=http://localhost/api
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost/api
+    env_file:
+      - apps/web/.env
+    depends_on:
+      - backend
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always

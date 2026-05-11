@@ -144,6 +144,13 @@ export default function UserMenu({ variant = "desktop", onNavigate }: Props) {
             <p className="truncate text-xs text-text-muted">{user.email}</p>
           </div>
         </div>
+        <Link
+          href="/wallet"
+          onClick={onNavigate}
+          className="block rounded-lg px-4 py-3 text-left text-sm font-medium text-text-muted transition-colors hover:bg-surface hover:text-primary"
+        >
+          Moje ulaznice
+        </Link>
         <button
           type="button"
           onClick={handleLogout}
@@ -177,6 +184,18 @@ export default function UserMenu({ variant = "desktop", onNavigate }: Props) {
             <p className="truncate text-sm font-semibold text-neutral">{fullName}</p>
             <p className="truncate text-xs text-text-muted">{user.email}</p>
           </div>
+          <Link
+            href="/wallet"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-text-muted transition-colors hover:bg-surface hover:text-primary"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+               <path d="M20 12V8a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-4" strokeLinecap="round" strokeLinejoin="round" />
+               <path d="M20 12h-4a2 2 0 000 4h4v-4z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Moje ulaznice
+          </Link>
           <button
             type="button"
             role="menuitem"
