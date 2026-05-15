@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import GoogleButton from "@/components/GoogleButton";
+import Logo from "@/components/Logo";
 import { toast } from "@/components/Toaster";
 import { loginAction } from "@/lib/auth/actions";
 import { IDLE, type AuthState } from "@/lib/auth/types";
@@ -53,12 +54,9 @@ export default function PrijavaPage() {
   return (
     <div className="noise-bg relative min-h-screen overflow-hidden">
       {/* minimal brand mark, top-left */}
-      <Link
-        href="/"
-        className="font-display absolute top-5 left-6 z-20 text-lg font-extrabold tracking-[0.18em] text-primary select-none md:top-6 md:left-10"
-      >
-        NOIR
-      </Link>
+      <div className="absolute top-5 left-6 z-20 md:top-6 md:left-10">
+        <Logo href="/" height={28} />
+      </div>
 
       <main className="relative flex min-h-screen items-center py-14 md:py-10">
         {/* decorative background */}
@@ -243,9 +241,7 @@ export default function PrijavaPage() {
               <div className="pointer-events-none absolute -bottom-16 -left-16 h-64 w-64 rounded-full bg-secondary/25 blur-3xl" />
 
               <div className="relative z-10">
-                <span className="font-display text-lg font-extrabold tracking-[0.18em] text-white/90">
-                  NOIR
-                </span>
+                <Logo tone="light" height={28} />
                 <h2 className="font-display mt-5 text-2xl leading-tight font-extrabold md:text-3xl">
                   Tvoj sljedeći izlazak
                   <br />

@@ -95,9 +95,9 @@ async def get_organization(org_id: UUID, db: AsyncSession = Depends(get_db)):
 async def create_organization(
     payload: OrganizationCreate,
     db: AsyncSession = Depends(get_db),
-    user: CurrentUser = Depends(require_platform_roles("admin"))
+    user: CurrentUser = Depends(require_platform_roles("super_admin"))
 ):
-    """Create a new organization. Platform Admin only."""
+    """Create a new organization. Platform super-admin only."""
     return await NoirService.create_organization(db, payload)
 
 @router.patch("/organizations/{org_id}", response_model=OrganizationOut)
@@ -107,7 +107,7 @@ async def update_organization(
     db: AsyncSession = Depends(get_db),
     user: CurrentUser = Depends(get_current_user)
 ):
-    """Update an organization. Requires 'owner' or platform 'admin'."""
+    """Update an organization. Requires org 'owner' or platform 'super_admin'."""
     return await NoirService.update_organization(db, user.id, org_id, payload)
 
 # ======================

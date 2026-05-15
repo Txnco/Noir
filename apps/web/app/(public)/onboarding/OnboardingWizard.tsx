@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Logo from "@/components/Logo";
 import { toast } from "@/components/Toaster";
 import { submitOnboardingAction } from "@/lib/auth/onboarding";
 import type { TagOut } from "@/lib/typescript/api-types";
@@ -141,7 +141,7 @@ export default function OnboardingWizard({
       const result = await submitOnboardingAction(payload);
       if (result.status === "success") {
         toast.success("Dobrodošao u Noir!", "Profil je spreman.");
-        router.replace("/");
+        router.replace("/eventi");
       } else {
         toast.error("Spremanje nije uspjelo", result.error);
       }
@@ -150,12 +150,9 @@ export default function OnboardingWizard({
 
   return (
     <div className="noise-bg relative min-h-screen overflow-hidden">
-      <Link
-        href="/"
-        className="font-display absolute top-5 left-6 z-20 text-lg font-extrabold tracking-[0.18em] text-primary select-none md:top-6 md:left-10"
-      >
-        NOIR
-      </Link>
+      <div className="absolute top-5 left-6 z-20 md:top-6 md:left-10">
+        <Logo href="/" height={28} />
+      </div>
 
       <main className="relative flex min-h-screen items-center py-14 md:py-10">
         <div className="pointer-events-none absolute -top-24 -left-24 h-[420px] w-[420px] rounded-full bg-secondary/10 blur-3xl" />
@@ -346,14 +343,6 @@ export default function OnboardingWizard({
                   </button>
 
                   <div className="flex flex-col-reverse gap-3 sm:flex-row">
-                    <button
-                      type="button"
-                      onClick={() => finish(true)}
-                      disabled={pending}
-                      className="rounded-full px-6 py-3 text-sm font-semibold text-text-muted transition-all hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      Preskoči
-                    </button>
                     <button
                       type="button"
                       onClick={() => finish(false)}

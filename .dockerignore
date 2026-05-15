@@ -1,0 +1,18 @@
+# Keep build context small — these are installed/generated inside the image,
+# or are irrelevant to it.
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+**/build
+.git
+.gitignore
+**/.env
+**/.env.*
+**/*.log
+**/.DS_Store
+**/coverage
+**/.pytest_cache
+**/__pycache__
+**/.venv
+README.md

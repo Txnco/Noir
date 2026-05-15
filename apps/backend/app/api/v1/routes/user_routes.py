@@ -129,7 +129,7 @@ async def list_profiles(
     page_size: int = Query(20, ge=1, le=100),
     search: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
-    _: CurrentUser = Depends(require_platform_roles("admin", "staff")),
+    _: CurrentUser = Depends(require_platform_roles("super_admin", "support")),
 ):
     query = select(Profile)
     count_query = select(func.count(Profile.id))
@@ -161,7 +161,7 @@ async def list_profiles(
 async def get_profile(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
-    _: CurrentUser = Depends(require_platform_roles("admin", "staff")),
+    _: CurrentUser = Depends(require_platform_roles("super_admin", "support")),
 ):
     profile = (
         await db.execute(select(Profile).where(Profile.id == user_id))

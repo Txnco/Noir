@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Reveal from "@/components/Reveal";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -60,52 +61,14 @@ export default function LandingPage() {
           {/* phone mockup */}
           <div className="animate-fade-up delay-400 relative flex justify-center lg:justify-end">
             <div className="animate-float relative">
-              {/* phone frame */}
-              <div className="relative h-[520px] w-[260px] overflow-hidden rounded-[2.5rem] border-[6px] border-neutral/90 bg-neutral shadow-2xl">
-                {/* status bar */}
-                <div className="flex items-center justify-between bg-neutral px-5 pt-3 pb-2">
-                  <span className="text-[10px] font-medium text-white/60">21:37</span>
-                  <div className="mx-auto h-5 w-20 rounded-full bg-neutral-light/80" />
-                  <div className="flex gap-1">
-                    <div className="h-2.5 w-2.5 rounded-full bg-white/40" />
-                    <div className="h-2.5 w-2.5 rounded-full bg-white/40" />
-                  </div>
-                </div>
-                {/* mock content */}
-                <div className="space-y-3 bg-surface p-4">
-                  {/* search */}
-                  <div className="flex items-center gap-2 rounded-xl bg-surface-white px-3 py-2.5 shadow-sm">
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#6B7B85" strokeWidth="1.5"/><path d="M11 11l3 3" stroke="#6B7B85" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                    <span className="text-[11px] text-text-muted">Pretraži evente...</span>
-                  </div>
-                  {/* tag pills */}
-                  <div className="flex gap-1.5 overflow-hidden">
-                    {["techno", "live", "kviz", "stand-up"].map((tag) => (
-                      <span key={tag} className="shrink-0 rounded-full bg-accent/15 px-2.5 py-1 text-[10px] font-medium text-primary">
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                  {/* event cards */}
-                  {[
-                    { name: "Neon Nights", venue: "Club Boogaloo", price: "8€", color: "bg-secondary/20" },
-                    { name: "Jazz & Wine", venue: "Vintage Industrial", price: "12€", color: "bg-accent/20" },
-                    { name: "Student Kviz", venue: "Craft Room", price: "5€", color: "bg-primary/15" },
-                  ].map((evt, i) => (
-                    <div key={i} className="overflow-hidden rounded-2xl bg-surface-white shadow-sm">
-                      <div className={`h-20 ${evt.color}`} />
-                      <div className="px-3 py-2.5">
-                        <p className="text-xs font-bold text-neutral">{evt.name}</p>
-                        <p className="mt-0.5 text-[10px] text-text-muted">{evt.venue}</p>
-                        <div className="mt-1.5 flex items-center justify-between">
-                          <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-primary">{evt.price}</span>
-                          <span className="text-[9px] font-medium text-accent">Early Bird</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <Image
+                src="/assets/images/phone_mockup_v1.png"
+                alt="Noir aplikacija na mobitelu"
+                width={1238}
+                height={2302}
+                priority
+                className="relative h-140 w-auto drop-shadow-2xl"
+              />
               {/* glow behind phone */}
               <div className="absolute -inset-6 -z-10 rounded-[3rem] bg-gradient-to-br from-accent/20 via-secondary/10 to-transparent blur-2xl" />
             </div>

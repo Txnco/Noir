@@ -131,6 +131,7 @@ export default function UserMenu({ variant = "desktop", onNavigate }: Props) {
   const initials = initialsOf(user);
   const fullName =
     `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || user.email || "";
+  const isSuperAdmin = user.platformRole === "super_admin";
 
   if (variant === "mobile") {
     return (
@@ -144,6 +145,22 @@ export default function UserMenu({ variant = "desktop", onNavigate }: Props) {
             <p className="truncate text-xs text-text-muted">{user.email}</p>
           </div>
         </div>
+        {isSuperAdmin && (
+          <Link
+            href="/admin"
+            onClick={onNavigate}
+            className="block rounded-lg px-4 py-3 text-left text-sm font-semibold text-primary transition-colors hover:bg-surface"
+          >
+            Admin nadzorna ploča
+          </Link>
+        )}
+        <Link
+          href="/profil"
+          onClick={onNavigate}
+          className="block rounded-lg px-4 py-3 text-left text-sm font-medium text-text-muted transition-colors hover:bg-surface hover:text-primary"
+        >
+          Moj profil
+        </Link>
         <Link
           href="/wallet"
           onClick={onNavigate}
@@ -184,6 +201,31 @@ export default function UserMenu({ variant = "desktop", onNavigate }: Props) {
             <p className="truncate text-sm font-semibold text-neutral">{fullName}</p>
             <p className="truncate text-xs text-text-muted">{user.email}</p>
           </div>
+          {isSuperAdmin && (
+            <Link
+              href="/admin"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-left text-sm font-semibold text-primary transition-colors hover:bg-surface"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 3l8 4v5c0 4.4-3.2 7.9-8 9-4.8-1.1-8-4.6-8-9V7l8-4z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Admin nadzorna ploča
+            </Link>
+          )}
+          <Link
+            href="/profil"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-text-muted transition-colors hover:bg-surface hover:text-primary"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="8" r="4" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Moj profil
+          </Link>
           <Link
             href="/wallet"
             role="menuitem"

@@ -6,6 +6,7 @@ authoritative user id (same UUID used as `profiles.id`).
 """
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from uuid import UUID
 
@@ -18,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.models.profile import Profile
+from app.models.profile import Profile, UserPlatformRole
 
 
 bearer_scheme = HTTPBearer(auto_error=True)
@@ -128,10 +129,10 @@ async def get_current_profile(
     """
     result = await db.execute(select(Profile).where(Profile.id == user.id))
     profile = result.scalars().first()
-    
+
     app_meta = user.raw_claims.get("app_metadata") or {}
     user_meta = user.raw_claims.get("user_metadata") or {}
-    
+
     if profile:
         # Sync metadata and email only if they've changed to avoid unnecessary locks
         changed = False
@@ -144,10 +145,14 @@ async def get_current_profile(
         if user.email and profile.email != user.email:
             profile.email = user.email
             changed = True
-        
+
+        # Defensive: ensure the default platform_role row exists for users
+        # who signed up before migration 007 (or who somehow bypassed the trigger).
+        await _ensure_default_platform_role(db, user.id)
+
         if changed:
             await db.flush()
-            
+
         return profile
 
     # Auto-provision fallback
@@ -170,10 +175,28 @@ async def get_current_profile(
         email=user.email,
         app_metadata=app_meta,
         user_metadata=user_meta,
-        claimed_at=datetime.now(timezone.utc)
+        claimed_at=datetime.now(timezone.utc),
     )
     db.add(profile)
     await db.flush()
+
+    await _ensure_default_platform_role(db, user.id)
+
     await db.refresh(profile)
-    
     return profile
+
+
+async def _ensure_default_platform_role(db: AsyncSession, user_id: UUID) -> None:
+    """Insert a 'user' row in user_platform_roles if the caller has none.
+
+    The Supabase `handle_new_user` trigger (migration 007) already does this
+    for fresh signups; this fallback covers pre-existing users and any case
+    where the trigger didn't run (manual auth.users insert, race condition).
+    """
+    existing = await db.execute(
+        select(UserPlatformRole.user_id).where(UserPlatformRole.user_id == user_id)
+    )
+    if existing.scalar() is not None:
+        return
+    db.add(UserPlatformRole(user_id=user_id, role="user"))
+    await db.flush()

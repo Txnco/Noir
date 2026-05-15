@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function OnboardingPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/prijava");
-  if (user.profile.onboarding_completed) redirect("/");
+  if (user.profile.onboarding_completed) redirect("/eventi");
 
   const [genres, eventTypes] = await Promise.all([
     fetchTags("genre"),

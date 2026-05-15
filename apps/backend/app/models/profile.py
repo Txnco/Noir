@@ -4,8 +4,8 @@ Profile + org-membership + platform-role models.
 These mirror Supabase's auth model:
   - auth.users        → identity, owned by Supabase (not mapped here)
   - public.profiles   → 1:1 extension table, PK = auth.users.id
-  - user_platform_roles → platform-wide role (admin/staff/user)
-  - organization_members → org-scoped role (owner/admin/staff)
+  - user_platform_roles → platform-wide role (super_admin/support/finance_admin/user)
+  - organization_members → org-scoped role (owner/admin/manager/staff/door_staff/bar_staff)
   - user_preferences  → optional per-user settings
 
 We never write to auth.users from Python — Supabase owns it. profiles is
@@ -53,7 +53,14 @@ class UserPlatformRole(Base):
 
     user_id = Column(UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), primary_key=True)
     role = Column(
-        Enum("admin", "staff", "user", name="platform_role", create_type=False),
+        Enum(
+            "super_admin",
+            "support",
+            "finance_admin",
+            "user",
+            name="platform_role",
+            create_type=False,
+        ),
         nullable=False,
     )
     granted_by = Column(UUID(as_uuid=True), nullable=True)
@@ -69,7 +76,16 @@ class OrganizationMember(Base):
     org_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
     role = Column(
-        Enum("owner", "admin", "staff", name="org_member_role", create_type=False),
+        Enum(
+            "owner",
+            "admin",
+            "manager",
+            "staff",
+            "door_staff",
+            "bar_staff",
+            name="org_member_role",
+            create_type=False,
+        ),
         nullable=False,
         default="staff",
     )

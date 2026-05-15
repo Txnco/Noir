@@ -39,7 +39,7 @@ class ProfileUpdate(BaseModel):
 
 class OrgMembershipOut(BaseModel):
     org_id: UUID
-    role: str  # owner | admin | staff
+    role: str  # owner | admin | manager | staff | door_staff | bar_staff
     is_active: bool
 
 
@@ -48,7 +48,7 @@ class CurrentUserResponse(BaseModel):
     email: Optional[EmailStr] = None
     email_verified: bool
     profile: ProfileOut
-    platform_role: str  # admin | staff | user
+    platform_role: str  # super_admin | support | finance_admin | user
     memberships: List[OrgMembershipOut] = []
 
 

@@ -37,7 +37,7 @@ export async function loginAction(
   return {
     status: "success",
     message: "Prijava uspješna. Dobrodošao natrag!",
-    redirectTo: "/",
+    redirectTo: "/eventi",
   };
 }
 

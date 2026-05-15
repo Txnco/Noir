@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, type ReactNode } from "react";
-import Link from "next/link";
+import Logo from "@/components/Logo";
 import UserMenu from "@/components/UserMenu";
 
 interface NavLink {
@@ -47,12 +47,7 @@ export default function Navbar({
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link
-          href="/"
-          className="font-display text-xl font-extrabold tracking-[0.18em] text-primary select-none"
-        >
-          NOIR
-        </Link>
+        <Logo href="/" height={48} />
 
         {/* Desktop links */}
         <div className="hidden items-center gap-8 md:flex">

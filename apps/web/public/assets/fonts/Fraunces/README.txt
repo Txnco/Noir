@@ -10,48 +10,48 @@ Fraunces is a variable font with these axes:
   wght
 
 This means all the styles are contained in these files:
-  Fraunces/Fraunces-VariableFont_SOFT,WONK,opsz,wght.ttf
-  Fraunces/Fraunces-Italic-VariableFont_SOFT,WONK,opsz,wght.ttf
+  Fraunces-VariableFont_SOFT,WONK,opsz,wght.ttf
+  Fraunces-Italic-VariableFont_SOFT,WONK,opsz,wght.ttf
 
 If your app fully supports variable fonts, you can now pick intermediate styles
 that aren’t available as static fonts. Not all apps support variable fonts, and
 in those cases you can use the static font files for Fraunces:
-  Fraunces/static/Fraunces_72pt-Thin.ttf
-  Fraunces/static/Fraunces_72pt-Light.ttf
-  Fraunces/static/Fraunces_72pt-Regular.ttf
-  Fraunces/static/Fraunces_72pt-SemiBold.ttf
-  Fraunces/static/Fraunces_72pt-Bold.ttf
-  Fraunces/static/Fraunces_72pt-Black.ttf
-  Fraunces/static/Fraunces_72pt_Soft-Thin.ttf
-  Fraunces/static/Fraunces_72pt_Soft-Light.ttf
-  Fraunces/static/Fraunces_72pt_Soft-Regular.ttf
-  Fraunces/static/Fraunces_72pt_Soft-SemiBold.ttf
-  Fraunces/static/Fraunces_72pt_Soft-Bold.ttf
-  Fraunces/static/Fraunces_72pt_Soft-Black.ttf
-  Fraunces/static/Fraunces_72pt_SuperSoft-Thin.ttf
-  Fraunces/static/Fraunces_72pt_SuperSoft-Light.ttf
-  Fraunces/static/Fraunces_72pt_SuperSoft-Regular.ttf
-  Fraunces/static/Fraunces_72pt_SuperSoft-SemiBold.ttf
-  Fraunces/static/Fraunces_72pt_SuperSoft-Bold.ttf
-  Fraunces/static/Fraunces_72pt_SuperSoft-Black.ttf
-  Fraunces/static/Fraunces_72pt-ThinItalic.ttf
-  Fraunces/static/Fraunces_72pt-LightItalic.ttf
-  Fraunces/static/Fraunces_72pt-Italic.ttf
-  Fraunces/static/Fraunces_72pt-SemiBoldItalic.ttf
-  Fraunces/static/Fraunces_72pt-BoldItalic.ttf
-  Fraunces/static/Fraunces_72pt-BlackItalic.ttf
-  Fraunces/static/Fraunces_72pt_Soft-ThinItalic.ttf
-  Fraunces/static/Fraunces_72pt_Soft-LightItalic.ttf
-  Fraunces/static/Fraunces_72pt_Soft-Italic.ttf
-  Fraunces/static/Fraunces_72pt_Soft-SemiBoldItalic.ttf
-  Fraunces/static/Fraunces_72pt_Soft-BoldItalic.ttf
-  Fraunces/static/Fraunces_72pt_Soft-BlackItalic.ttf
-  Fraunces/static/Fraunces_72pt_SuperSoft-ThinItalic.ttf
-  Fraunces/static/Fraunces_72pt_SuperSoft-LightItalic.ttf
-  Fraunces/static/Fraunces_72pt_SuperSoft-Italic.ttf
-  Fraunces/static/Fraunces_72pt_SuperSoft-SemiBoldItalic.ttf
-  Fraunces/static/Fraunces_72pt_SuperSoft-BoldItalic.ttf
-  Fraunces/static/Fraunces_72pt_SuperSoft-BlackItalic.ttf
+  static/Fraunces_72pt-Thin.ttf
+  static/Fraunces_72pt-Light.ttf
+  static/Fraunces_72pt-Regular.ttf
+  static/Fraunces_72pt-SemiBold.ttf
+  static/Fraunces_72pt-Bold.ttf
+  static/Fraunces_72pt-Black.ttf
+  static/Fraunces_72pt_Soft-Thin.ttf
+  static/Fraunces_72pt_Soft-Light.ttf
+  static/Fraunces_72pt_Soft-Regular.ttf
+  static/Fraunces_72pt_Soft-SemiBold.ttf
+  static/Fraunces_72pt_Soft-Bold.ttf
+  static/Fraunces_72pt_Soft-Black.ttf
+  static/Fraunces_72pt_SuperSoft-Thin.ttf
+  static/Fraunces_72pt_SuperSoft-Light.ttf
+  static/Fraunces_72pt_SuperSoft-Regular.ttf
+  static/Fraunces_72pt_SuperSoft-SemiBold.ttf
+  static/Fraunces_72pt_SuperSoft-Bold.ttf
+  static/Fraunces_72pt_SuperSoft-Black.ttf
+  static/Fraunces_72pt-ThinItalic.ttf
+  static/Fraunces_72pt-LightItalic.ttf
+  static/Fraunces_72pt-Italic.ttf
+  static/Fraunces_72pt-SemiBoldItalic.ttf
+  static/Fraunces_72pt-BoldItalic.ttf
+  static/Fraunces_72pt-BlackItalic.ttf
+  static/Fraunces_72pt_Soft-ThinItalic.ttf
+  static/Fraunces_72pt_Soft-LightItalic.ttf
+  static/Fraunces_72pt_Soft-Italic.ttf
+  static/Fraunces_72pt_Soft-SemiBoldItalic.ttf
+  static/Fraunces_72pt_Soft-BoldItalic.ttf
+  static/Fraunces_72pt_Soft-BlackItalic.ttf
+  static/Fraunces_72pt_SuperSoft-ThinItalic.ttf
+  static/Fraunces_72pt_SuperSoft-LightItalic.ttf
+  static/Fraunces_72pt_SuperSoft-Italic.ttf
+  static/Fraunces_72pt_SuperSoft-SemiBoldItalic.ttf
+  static/Fraunces_72pt_SuperSoft-BoldItalic.ttf
+  static/Fraunces_72pt_SuperSoft-BlackItalic.ttf
 
 Get started
 -----------

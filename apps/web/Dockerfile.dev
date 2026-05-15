@@ -1,0 +1,19 @@
+FROM node:20-alpine
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install workspace deps first so this layer is cached across source edits.
+COPY package.json package-lock.json turbo.json ./
+COPY apps/web/package.json ./apps/web/
+RUN npm ci --no-audit --no-fund
+
+# Bake the source into the image. `docker compose watch` syncs your host edits
+# on top of this — into the container's native Linux filesystem — so Turbopack's
+# file watcher actually fires (a Windows bind mount would not deliver FS events).
+COPY . .
+
+ENV NEXT_TELEMETRY_DISABLED=1
+
+EXPOSE 3000
+
+CMD ["npm", "run", "dev", "--workspace=web", "--", "-H", "0.0.0.0", "-p", "3000"]

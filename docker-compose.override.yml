@@ -1,0 +1,36 @@
+# Auto-loaded by `docker compose up`. Runs the web app in Next.js dev mode.
+#
+# Hot reload uses Docker Compose's `watch` feature — it SYNCS your edits into
+# the container's native Linux filesystem so Turbopack's watcher fires. A plain
+# bind mount does NOT work here: Windows -> Linux mounts don't deliver FS events.
+#
+# Start it with:   docker compose up --build --watch
+#
+# To run the production-shaped build instead, ignore this file:
+#   docker compose -f docker-compose.yml up --build
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile.dev
+    environment:
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+    develop:
+      watch:
+        # Source edits — synced into the container, Turbopack hot-reloads them.
+        - action: sync
+          path: ./apps/web
+          target: /app/apps/web
+          ignore:
+            - node_modules/
+            - .next/
+        - action: sync
+          path: ./packages
+          target: /app/packages
+        # Dependency changes need a fresh `npm ci` — rebuild the image.
+        - action: rebuild
+          path: ./apps/web/package.json
+        - action: rebuild
+          path: ./package-lock.json

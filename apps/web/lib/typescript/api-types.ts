@@ -87,6 +87,7 @@ export interface Viewer {
   firstName?: string | null;
   lastName?: string | null;
   avatarUrl?: string | null;
+  platformRole?: string | null;
 }
 
 export interface AuthTokenResponse {

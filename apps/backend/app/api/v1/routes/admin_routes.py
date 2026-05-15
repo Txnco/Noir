@@ -21,7 +21,7 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 @router.get(
     "/cache/stats",
     summary="Get cache statistics",
-    dependencies=[Depends(require_platform_roles("admin"))],
+    dependencies=[Depends(require_platform_roles("super_admin"))],
 )
 async def get_cache_stats() -> dict[str, Any]:
     """Get current cache statistics."""
@@ -31,7 +31,7 @@ async def get_cache_stats() -> dict[str, Any]:
 @router.delete(
     "/cache",
     summary="Clear cache",
-    dependencies=[Depends(require_platform_roles("admin"))],
+    dependencies=[Depends(require_platform_roles("super_admin"))],
 )
 async def clear_cache(namespace: str | None = None) -> dict[str, Any]:
     """Clear cache (optionally by namespace)."""
@@ -48,7 +48,7 @@ async def clear_cache(namespace: str | None = None) -> dict[str, Any]:
 @router.get(
     "/jobs/stats",
     summary="Get job queue statistics",
-    dependencies=[Depends(require_platform_roles("admin"))],
+    dependencies=[Depends(require_platform_roles("super_admin"))],
 )
 async def get_jobs_stats() -> dict[str, Any]:
     """Get current job queue statistics."""
@@ -63,7 +63,7 @@ async def get_jobs_stats() -> dict[str, Any]:
 @router.get(
     "/jobs/{job_id}",
     summary="Get job status",
-    dependencies=[Depends(require_platform_roles("admin"))],
+    dependencies=[Depends(require_platform_roles("super_admin"))],
 )
 async def get_job(job_id: str) -> dict[str, Any]:
     """Get status of a specific job."""
@@ -79,7 +79,7 @@ async def get_job(job_id: str) -> dict[str, Any]:
 @router.delete(
     "/jobs/{job_id}",
     summary="Cancel a job",
-    dependencies=[Depends(require_platform_roles("admin"))],
+    dependencies=[Depends(require_platform_roles("super_admin"))],
 )
 async def cancel_job_endpoint(job_id: str) -> dict[str, Any]:
     """Cancel a pending job."""
@@ -95,7 +95,7 @@ async def cancel_job_endpoint(job_id: str) -> dict[str, Any]:
 @router.post(
     "/jobs/cleanup",
     summary="Clean up old jobs",
-    dependencies=[Depends(require_platform_roles("admin"))],
+    dependencies=[Depends(require_platform_roles("super_admin"))],
 )
 async def cleanup_jobs(older_than_seconds: int = 3600) -> dict[str, Any]:
     """Remove completed/failed jobs older than specified time."""
@@ -109,7 +109,7 @@ async def cleanup_jobs(older_than_seconds: int = 3600) -> dict[str, Any]:
 @router.get(
     "/scheduled",
     summary="List scheduled jobs",
-    dependencies=[Depends(require_platform_roles("admin"))],
+    dependencies=[Depends(require_platform_roles("super_admin"))],
 )
 async def list_scheduled_jobs() -> list[dict[str, Any]]:
     """Get all scheduled/recurring jobs."""
@@ -119,7 +119,7 @@ async def list_scheduled_jobs() -> list[dict[str, Any]]:
 @router.delete(
     "/scheduled/{job_id}",
     summary="Cancel scheduled job",
-    dependencies=[Depends(require_platform_roles("admin"))],
+    dependencies=[Depends(require_platform_roles("super_admin"))],
 )
 async def cancel_scheduled_job(job_id: str) -> dict[str, Any]:
     """Cancel a scheduled job."""
@@ -135,7 +135,7 @@ async def cancel_scheduled_job(job_id: str) -> dict[str, Any]:
 @router.post(
     "/scheduled/{job_id}/enable",
     summary="Enable scheduled job",
-    dependencies=[Depends(require_platform_roles("admin"))],
+    dependencies=[Depends(require_platform_roles("super_admin"))],
 )
 async def enable_scheduled_job(job_id: str) -> dict[str, Any]:
     """Enable a scheduled job."""
@@ -151,7 +151,7 @@ async def enable_scheduled_job(job_id: str) -> dict[str, Any]:
 @router.post(
     "/scheduled/{job_id}/disable",
     summary="Disable scheduled job",
-    dependencies=[Depends(require_platform_roles("admin"))],
+    dependencies=[Depends(require_platform_roles("super_admin"))],
 )
 async def disable_scheduled_job(job_id: str) -> dict[str, Any]:
     """Disable a scheduled job."""
@@ -170,7 +170,7 @@ async def disable_scheduled_job(job_id: str) -> dict[str, Any]:
 @router.get(
     "/system",
     summary="Get system information",
-    dependencies=[Depends(require_platform_roles("admin"))],
+    dependencies=[Depends(require_platform_roles("super_admin"))],
 )
 async def get_system_info() -> dict[str, Any]:
     """Get system configuration and status."""

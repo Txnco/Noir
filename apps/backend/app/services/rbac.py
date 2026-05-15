@@ -2,8 +2,10 @@
 Role-Based Access Control.
 
 Two scopes:
-  - Platform roles (admin/staff/user) live in `user_platform_roles`.
-  - Org roles (owner/admin/staff) live in `organization_members`.
+  - Platform roles (super_admin/support/finance_admin/user) live in
+    `user_platform_roles`.
+  - Org roles (owner/admin/manager/staff/door_staff/bar_staff) live in
+    `organization_members`.
 
 Callers are identified by the Supabase JWT (`CurrentUser`). Role lookups
 run against the DB on demand — no state is stuffed into the JWT.
@@ -90,9 +92,9 @@ def require_org_authority(allowed_org_roles: Iterable[str] = ("owner", "admin"))
         if roles.get(str(org_id)) in needed:
             return
             
-        # 2. Fallback: platform admin
+        # 2. Fallback: platform super admin
         platform_role = await get_platform_role(db, user_id)
-        if platform_role == "admin":
+        if platform_role == "super_admin":
             return
             
         raise HTTPException(
@@ -103,7 +105,7 @@ def require_org_authority(allowed_org_roles: Iterable[str] = ("owner", "admin"))
     return check
 
 
-# Backwards-compatible alias so existing `Depends(require_roles(["admin"]))`
-# in admin_routes keeps working. "admin" here means platform-level admin.
+# Backwards-compatible alias for any callsite still passing a role list.
+# Platform-level roles only (super_admin/support/finance_admin).
 def require_roles(roles: Iterable[str]) -> Callable:
     return require_platform_roles(*roles)

@@ -82,6 +82,11 @@ def run_migrations_online() -> None:
             target_metadata=target_metadata,
             compare_type=True,
             compare_server_default=True,
+            # Commit between migrations so Postgres can use values
+            # added by an earlier migration (e.g. ALTER TYPE ... ADD VALUE)
+            # in a later one. Without this, `alembic upgrade head` wraps the
+            # whole chain in a single transaction.
+            transaction_per_migration=True,
         )
 
         with context.begin_transaction():

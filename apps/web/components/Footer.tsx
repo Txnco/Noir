@@ -1,3 +1,5 @@
+import Logo from "@/components/Logo";
+
 interface FooterLink {
   label: string;
   href: string;
@@ -19,10 +21,8 @@ export default function Footer({ links = defaultLinks }: FooterProps) {
       <div className="mx-auto max-w-6xl px-6">
         <div className="flex flex-col items-center gap-8 md:flex-row md:justify-between">
           <div>
-            <span className="font-display text-lg font-extrabold tracking-[0.18em] text-primary">
-              NOIR
-            </span>
-            <p className="mt-1 text-sm text-text-muted">Cijeli izlazak u jednom kliku.</p>
+            <Logo height={28} />
+            <p className="mt-2 text-sm text-text-muted">Cijeli izlazak u jednom kliku.</p>
           </div>
 
           <div className="flex items-center gap-8">
