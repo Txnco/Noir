@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, MapPin } from "lucide-react";
-import { haversineDistanceKm, formatDistance } from "@/lib/utils";
+import { Heart, X } from "lucide-react";
+import { haversineDistanceKm, formatDistance, slugHash } from "@/lib/utils";
 import Navbar from "@/components/Navbar";
+import FilterDrawer from "@/components/FilterDrawer";
 import Footer from "@/components/Footer";
 import Reveal from "@/components/Reveal";
 import CheckoutModal from "@/components/CheckoutModal";
@@ -27,6 +28,20 @@ type CategoryId =
   | "gastro";
 
 type DateGroup = "today" | "tomorrow" | "weekend" | "week";
+type SortOption = "date" | "price";
+type PriceRange = [number, number];
+
+interface DraftFilters {
+  dateFilter: DateGroup | "all";
+  priceRange: PriceRange;
+  distanceRadius: number | null;
+  sortBy: SortOption;
+}
+
+interface UserLocation {
+  lat: number;
+  lng: number;
+}
 
 interface ProcessedEvent extends EventDiscoveryOut {
   _gradient: string;
@@ -34,6 +49,16 @@ interface ProcessedEvent extends EventDiscoveryOut {
   _dateLabel: string;
   _lat: number;
   _lng: number;
+}
+
+interface FilterConfig {
+  search: string;
+  category: CategoryId;
+  dateFilter: DateGroup | "all";
+  priceRange: PriceRange;
+  distanceRadius: number | null;
+  userLocation: UserLocation | null;
+  maxPrice: number;
 }
 
 // ═══════════════ CONSTANTS ═══════════════
@@ -52,25 +77,25 @@ const CATEGORIES: { id: CategoryId; label: string }[] = [
   { id: "gastro", label: "Gastro" },
 ];
 
-const DATE_FILTERS: { id: DateGroup | "all"; label: string }[] = [
-  { id: "all", label: "Bilo kada" },
-  { id: "today", label: "Danas" },
-  { id: "tomorrow", label: "Sutra" },
-  { id: "weekend", label: "Vikend" },
-  { id: "week", label: "Ovaj tjedan" },
-];
+const DATE_LABELS: Record<DateGroup, string> = {
+  today: "Danas",
+  tomorrow: "Sutra",
+  weekend: "Vikend",
+  week: "Ovaj tjedan",
+};
 
-// Mock Zagreb venue coordinates — replaced when API exposes real lat/lng
 const MOCK_VENUE_COORDS = [
-  { lat: 45.8128, lng: 15.9641 }, // Tvornica kulture
-  { lat: 45.7886, lng: 15.9268 }, // Jarun / Aquarius
-  { lat: 45.8162, lng: 15.9726 }, // Tkalčićeva
-  { lat: 45.8008, lng: 15.9697 }, // KSET
-  { lat: 45.8189, lng: 15.9748 }, // Boogaloo
-  { lat: 45.8225, lng: 15.9511 }, // Lauba
+  { lat: 45.8128, lng: 15.9641 },
+  { lat: 45.7886, lng: 15.9268 },
+  { lat: 45.8162, lng: 15.9726 },
+  { lat: 45.8008, lng: 15.9697 },
+  { lat: 45.8189, lng: 15.9748 },
+  { lat: 45.8225, lng: 15.9511 },
 ];
 
 const LOC_KEY = "noir_user_loc";
+const MAX_PRICE = 300; // price slider upper bound (€)
+const MAX_DISTANCE = 50; // distance slider upper bound (km)
 
 const GRADIENTS = [
   "linear-gradient(135deg, #1e1b4b 0%, #4338ca 50%, #7c3aed 100%)",
@@ -78,6 +103,44 @@ const GRADIENTS = [
   "linear-gradient(135deg, #064e3b 0%, #047857 50%, #0d9488 100%)",
   "linear-gradient(135deg, #831843 0%, #be185d 50%, #ec4899 100%)",
 ];
+
+// ═══════════════ FILTER FUNCTION (pure, outside component) ═══════════════
+
+function applyFilters(events: ProcessedEvent[], config: FilterConfig): ProcessedEvent[] {
+  const q = config.search.trim().toLowerCase();
+  const normalize = (s: string) => s.toLowerCase().replace(/[-\s]+/g, " ").trim();
+
+  return events.filter((e) => {
+    if (config.category !== "all") {
+      const tags = (e.tags ?? []).map(normalize);
+      if (!tags.includes(normalize(config.category))) return false;
+    }
+
+    if (config.dateFilter !== "all" && e._dateGroup !== config.dateFilter) return false;
+
+    // Price range — only filter when user moved handles away from defaults
+    const eventPrice = e.min_price ?? 0;
+    if (config.priceRange[0] > 0 && eventPrice < config.priceRange[0]) return false;
+    if (config.priceRange[1] < config.maxPrice && eventPrice > config.priceRange[1]) return false;
+
+    // Distance radius filter
+    if (config.distanceRadius !== null && config.userLocation) {
+      const dist = haversineDistanceKm(
+        config.userLocation.lat, config.userLocation.lng,
+        e._lat, e._lng,
+      );
+      if (dist > config.distanceRadius) return false;
+    }
+
+    if (q) {
+      const haystack =
+        `${e.name} ${e.venue_name ?? ""} ${(e.tags ?? []).join(" ")}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+
+    return true;
+  });
+}
 
 // ═══════════════ HELPERS ═══════════════
 
@@ -112,8 +175,9 @@ function priceLabel(event: EventDiscoveryOut): string {
 
 // ═══════════════ COMPONENTS ═══════════════
 
-function CategoryIcon({ category }: { category: CategoryId }) {
-  const icons: Partial<Record<CategoryId, React.ReactElement>> = {
+// category accepts string — no CategoryId cast needed
+function CategoryIcon({ category }: { category: string }) {
+  const icons: Record<string, React.ReactElement> = {
     techno: (
       <svg viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="9" stroke="white" strokeWidth="1.5" />
@@ -180,6 +244,21 @@ function CategoryIcon({ category }: { category: CategoryId }) {
   return <div className="h-5 w-5">{icon}</div>;
 }
 
+function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-border bg-surface-white px-3 py-1 text-xs font-medium text-neutral">
+      {label}
+      <button
+        onClick={onRemove}
+        aria-label={`Ukloni filter: ${label}`}
+        className="transition-colors hover:text-primary"
+      >
+        <X size={10} />
+      </button>
+    </span>
+  );
+}
+
 function EventCard({
   event,
   index,
@@ -189,7 +268,7 @@ function EventCard({
   event: ProcessedEvent;
   index: number;
   onPurchase: (event: ProcessedEvent) => void;
-  userLocation: { lat: number; lng: number } | null;
+  userLocation: UserLocation | null;
 }) {
   const [liked, setLiked] = useState(false);
   const price = priceLabel(event);
@@ -198,14 +277,14 @@ function EventCard({
       ? haversineDistanceKm(userLocation.lat, userLocation.lng, event._lat, event._lng)
       : null;
 
+  const primaryTag = event.tags?.[0] ?? "event";
+
   return (
     <div
       className="animate-card-in group relative overflow-hidden rounded-2xl border border-border bg-surface-white shadow-sm transition-all duration-500 hover:-translate-y-1 hover:border-accent/40 hover:shadow-2xl hover:shadow-primary/10"
       style={{ animationDelay: `${Math.min(index * 60, 600)}ms` }}
     >
-      {/* Card body navigates to event detail (intercepting route shows Dialog) */}
       <Link href={`/eventi/${event.slug}`} className="block">
-        {/* Portrait image area */}
         <div className="relative aspect-[3/4] overflow-hidden bg-[#2C3840]">
           {event.cover_image_url ? (
             <Image
@@ -221,10 +300,8 @@ function EventCard({
             />
           )}
 
-          {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#2C3840]/90 to-transparent" />
 
-          {/* Grain overlay */}
           <div
             className="pointer-events-none absolute inset-0 opacity-20 mix-blend-overlay"
             style={{
@@ -233,13 +310,13 @@ function EventCard({
             }}
           />
 
-          {/* Category badge top-left */}
           <div className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full bg-black/30 px-3 py-1.5 backdrop-blur-md">
-            <CategoryIcon category="party" />
-            <span className="text-xs font-semibold text-white">Event</span>
+            <CategoryIcon category={primaryTag} />
+            <span className="text-xs font-semibold capitalize text-white">
+              {primaryTag.replace(/-/g, " ")}
+            </span>
           </div>
 
-          {/* Heart / Like button top-right — stops propagation so Link doesn't navigate */}
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -251,15 +328,10 @@ function EventCard({
           >
             <Heart
               size={16}
-              className={
-                liked
-                  ? "fill-rose-400 text-rose-400"
-                  : "fill-transparent text-white"
-              }
+              className={liked ? "fill-rose-400 text-rose-400" : "fill-transparent text-white"}
             />
           </button>
 
-          {/* Event info over gradient at bottom */}
           <div className="absolute bottom-0 left-0 right-0 p-5">
             <h3 className="font-display text-lg font-bold leading-tight text-white drop-shadow-sm transition-colors group-hover:text-accent">
               {event.name}
@@ -291,7 +363,6 @@ function EventCard({
         </div>
       </Link>
 
-      {/* Footer: price + CTA — outside Link so clicks don't trigger navigation */}
       <div className="flex items-center gap-3 p-4">
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Cijena:</p>
@@ -301,9 +372,7 @@ function EventCard({
           onClick={() => onPurchase(event)}
           className="shrink-0 rounded-xl bg-neutral px-5 py-3 text-xs font-bold uppercase tracking-widest text-white transition-all hover:bg-primary hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98]"
         >
-          {event.is_free || !event.min_price || event.min_price === 0
-            ? "Rezerviraj"
-            : "Kupi kartu"}
+          {event.is_free || !event.min_price || event.min_price === 0 ? "Rezerviraj" : "Kupi kartu"}
         </button>
       </div>
     </div>
@@ -348,20 +417,161 @@ function EmptyState({ onReset }: { onReset: () => void }) {
 // ═══════════════ MAIN CLIENT COMPONENT ═══════════════
 
 export default function EventiPageClient({ events }: { events: EventDiscoveryOut[] }) {
+  // ── Search ────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState<CategoryId>("all");
-  const [dateFilter, setDateFilter] = useState<DateGroup | "all">("all");
-  const [searchFocused, setSearchFocused] = useState(false);
-  const [checkoutEvent, setCheckoutEvent] = useState<ProcessedEvent | null>(null);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
 
+  // ── Fast filter: category only ────────────────────────────────
+  const [category, setCategory] = useState<CategoryId>("all");
+
+  // ── Drawer main state (instant on desktop) ────────────────────
+  const [dateFilter, setDateFilter] = useState<DateGroup | "all">("all");
+  const [priceRange, setPriceRange] = useState<PriceRange>([0, MAX_PRICE]);
+  const [distanceRadius, setDistanceRadius] = useState<number | null>(null);
+  const [sortBy, setSortBy] = useState<SortOption>("date");
+
+  // ── Draft state (mobile drawer pending) ───────────────────────
+  const [draft, setDraft] = useState<DraftFilters>({
+    dateFilter: "all",
+    priceRange: [0, MAX_PRICE],
+    distanceRadius: null,
+    sortBy: "date",
+  });
+
+  // ── UI state ──────────────────────────────────────────────────
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [checkoutEvent, setCheckoutEvent] = useState<ProcessedEvent | null>(null);
+
+  // ── Load saved location ───────────────────────────────────────
   useEffect(() => {
     try {
       const stored = localStorage.getItem(LOC_KEY);
       if (stored) setUserLocation(JSON.parse(stored));
     } catch { /* ignore */ }
   }, []);
+
+  // ── Processed events (slug-hash based, stable) ────────────────
+  const processedEvents = useMemo<ProcessedEvent[]>(
+    () =>
+      events.map((ev) => ({
+        ...ev,
+        _gradient: GRADIENTS[slugHash(ev.slug, GRADIENTS.length)],
+        _dateGroup: ev.occurrence_date ? getDateGroup(ev.occurrence_date) : "week",
+        _dateLabel: ev.occurrence_date ? formatDateShort(ev.occurrence_date) : "",
+        _lat: MOCK_VENUE_COORDS[slugHash(ev.slug, MOCK_VENUE_COORDS.length)].lat,
+        _lng: MOCK_VENUE_COORDS[slugHash(ev.slug, MOCK_VENUE_COORDS.length)].lng,
+      })),
+    [events],
+  );
+
+  // ── Filtered events ───────────────────────────────────────────
+  const filteredEvents = useMemo(
+    () =>
+      applyFilters(processedEvents, {
+        search,
+        category,
+        dateFilter,
+        priceRange,
+        distanceRadius,
+        userLocation,
+        maxPrice: MAX_PRICE,
+      }),
+    [processedEvents, search, category, dateFilter, priceRange, distanceRadius, userLocation],
+  );
+
+  // ── Draft result count (for mobile "Primijeni · X") ───────────
+  const draftResultCount = useMemo(
+    () =>
+      applyFilters(processedEvents, {
+        search,
+        category,
+        dateFilter: draft.dateFilter,
+        priceRange: draft.priceRange,
+        distanceRadius: draft.distanceRadius,
+        userLocation,
+        maxPrice: MAX_PRICE,
+      }).length,
+    [processedEvents, search, category, draft, userLocation],
+  );
+
+  // ── Sorted events ⚠️ grid renders this, NOT filteredEvents ────
+  const sortedEvents = useMemo(() => {
+    return [...filteredEvents].sort((a, b) => {
+      if (sortBy === "date")
+        return (a.occurrence_date ?? "").localeCompare(b.occurrence_date ?? "");
+      if (sortBy === "price")
+        return (a.min_price ?? 0) - (b.min_price ?? 0);
+      return 0;
+    });
+  }, [filteredEvents, sortBy]);
+
+  // ── Computed ──────────────────────────────────────────────────
+
+  const priceActive = priceRange[0] > 0 || priceRange[1] < MAX_PRICE;
+
+  // Badge counts only restrictive drawer filters (sortBy excluded)
+  const activeFilterCount = [
+    dateFilter !== "all",
+    priceActive,
+    distanceRadius !== null,
+  ].filter(Boolean).length;
+
+  const hasActiveFilters =
+    search !== "" ||
+    category !== "all" ||
+    dateFilter !== "all" ||
+    priceActive ||
+    distanceRadius !== null;
+
+  const hasActiveDrawerFilters =
+    dateFilter !== "all" ||
+    priceActive ||
+    distanceRadius !== null ||
+    sortBy !== "date";
+
+  // ── Handlers ──────────────────────────────────────────────────
+
+  function openDrawer() {
+    setDraft({ dateFilter, priceRange, distanceRadius, sortBy });
+    setFilterDrawerOpen(true);
+  }
+
+  function applyDraft() {
+    setDateFilter(draft.dateFilter);
+    setPriceRange(draft.priceRange);
+    setDistanceRadius(draft.distanceRadius);
+    setSortBy(draft.sortBy);
+    setFilterDrawerOpen(false);
+  }
+
+  function handleDraftChange(partial: Partial<DraftFilters>) {
+    setDraft((prev) => ({ ...prev, ...partial }));
+  }
+
+  function resetDrawerFilters() {
+    const defaults: DraftFilters = {
+      dateFilter: "all",
+      priceRange: [0, MAX_PRICE],
+      distanceRadius: null,
+      sortBy: "date",
+    };
+    setDateFilter("all");
+    setPriceRange([0, MAX_PRICE]);
+    setDistanceRadius(null);
+    setSortBy("date");
+    setDraft(defaults);
+    setFilterDrawerOpen(false);
+  }
+
+  function resetFilters() {
+    setSearch("");
+    setCategory("all");
+    setDateFilter("all");
+    setPriceRange([0, MAX_PRICE]);
+    setDistanceRadius(null);
+    setSortBy("date");
+    setDraft({ dateFilter: "all", priceRange: [0, MAX_PRICE], distanceRadius: null, sortBy: "date" });
+  }
 
   function requestLocation() {
     navigator.geolocation.getCurrentPosition((pos) => {
@@ -371,108 +581,90 @@ export default function EventiPageClient({ events }: { events: EventDiscoveryOut
     });
   }
 
-  // Process raw API events into UI-ready events (memoised so it runs once)
-  const processedEvents = useMemo<ProcessedEvent[]>(
-    () =>
-      events.map((ev, i) => ({
-        ...ev,
-        _gradient: GRADIENTS[i % GRADIENTS.length],
-        _dateGroup: ev.occurrence_date ? getDateGroup(ev.occurrence_date) : "week",
-        _dateLabel: ev.occurrence_date ? formatDateShort(ev.occurrence_date) : "",
-        _lat: MOCK_VENUE_COORDS[i % MOCK_VENUE_COORDS.length].lat,
-        _lng: MOCK_VENUE_COORDS[i % MOCK_VENUE_COORDS.length].lng,
-      })),
-    [events],
-  );
+  // ── Pill styles ───────────────────────────────────────────────
+  const activePill =
+    "rounded-full border border-primary bg-primary text-white text-sm font-semibold transition-all px-4 py-2";
+  const inactivePill =
+    "rounded-full border border-border bg-surface-white text-text-muted hover:border-accent/40 hover:text-primary text-sm transition-all px-4 py-2";
 
-  const filteredEvents = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return processedEvents.filter((e) => {
-      if (dateFilter !== "all" && e._dateGroup !== dateFilter) return false;
-      if (q) {
-        const haystack =
-          `${e.name} ${e.venue_name ?? ""} ${(e.tags ?? []).join(" ")}`.toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
-      return true;
-    });
-  }, [search, category, dateFilter, processedEvents]);
-
-  const resetFilters = () => {
-    setSearch("");
-    setCategory("all");
-    setDateFilter("all");
-    searchRef.current?.focus();
-  };
-
-  const hasActiveFilters = search !== "" || category !== "all" || dateFilter !== "all";
-
-  // ⌘K / Ctrl+K focusses the search bar
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        searchRef.current?.focus();
-      }
-      if (e.key === "Escape" && document.activeElement === searchRef.current) {
-        searchRef.current?.blur();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  // ── Active chip labels ────────────────────────────────────────
+  const priceLabelChip =
+    priceRange[0] === 0
+      ? `Do ${priceRange[1]}€`
+      : `${priceRange[0]}€ – ${priceRange[1]}€`;
 
   return (
     <div className="noise-bg relative min-h-screen">
-      {/* ═══ NAVBAR + FILTER PILLS ═══ */}
-      <Navbar cta={{ label: "Postani organizator", href: "/#kontakt" }}>
-        <div className="border-b border-border">
-          <div className="mx-auto max-w-6xl px-6 pt-1 pb-4">
-            {/* Category pills */}
-            <div className="scrollbar-hide -mx-6 flex gap-2 overflow-x-auto px-6 pb-1">
-              {CATEGORIES.map((cat) => {
-                const active = category === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => setCategory(cat.id)}
-                    className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
-                      active
-                        ? "border-primary bg-primary text-white shadow-md shadow-primary/20"
-                        : "border-border bg-surface-white text-text-muted hover:border-accent/40 hover:text-primary"
-                    }`}
-                  >
-                    {cat.label}
-                  </button>
-                );
-              })}
-            </div>
+      {/* ═══ NAVBAR ═══ */}
+      <Navbar
+        cta={{ label: "Postani organizator", href: "/#kontakt" }}
+        search={search}
+        onSearchChange={setSearch}
+        activeFilterCount={activeFilterCount}
+        onFilterOpen={openDrawer}
+      />
 
-            {/* Date tabs */}
-            <div className="scrollbar-hide -mx-6 mt-3 flex gap-2 overflow-x-auto px-6">
-              {DATE_FILTERS.map((d) => {
-                const active = dateFilter === d.id;
-                return (
-                  <button
-                    key={d.id}
-                    onClick={() => setDateFilter(d.id)}
-                    className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${
-                      active
-                        ? "bg-accent/15 text-primary"
-                        : "text-text-muted hover:bg-surface-white hover:text-primary"
-                    }`}
-                  >
-                    {d.label}
-                  </button>
-                );
-              })}
+      {/* ═══ FAST FILTER STRIP — category only, static, scrolls away ═══ */}
+      <div className="pt-20">
+        <div className="border-b border-border bg-surface">
+          <div className="mx-auto max-w-6xl px-6 pt-3 pb-4">
+            {/* Category pills — flex-wrap so all are reachable on any screen */}
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setCategory(cat.id)}
+                  className={category === cat.id ? activePill : inactivePill}
+                >
+                  {cat.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
-      </Navbar>
 
-      {/* ═══ HERO + SEARCH ═══ */}
-      <section className="relative overflow-hidden pt-52 pb-12 md:pt-60 md:pb-16">
+        {/* Active filter chips — conditional */}
+        {hasActiveFilters && (
+          <div className="mx-auto max-w-6xl flex flex-wrap items-center gap-2 px-6 py-2">
+            {category !== "all" && (
+              <ActiveChip
+                label={CATEGORIES.find((c) => c.id === category)?.label ?? category}
+                onRemove={() => setCategory("all")}
+              />
+            )}
+            {dateFilter !== "all" && (
+              <ActiveChip
+                label={DATE_LABELS[dateFilter]}
+                onRemove={() => setDateFilter("all")}
+              />
+            )}
+            {priceActive && (
+              <ActiveChip
+                label={priceLabelChip}
+                onRemove={() => setPriceRange([0, MAX_PRICE])}
+              />
+            )}
+            {distanceRadius !== null && (
+              <ActiveChip
+                label={`Do ${distanceRadius} km`}
+                onRemove={() => setDistanceRadius(null)}
+              />
+            )}
+            {search && (
+              <ActiveChip label={`"${search}"`} onRemove={() => setSearch("")} />
+            )}
+            <button
+              onClick={resetFilters}
+              className="text-xs font-medium text-accent transition-colors hover:text-primary"
+            >
+              Obriši sve
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ═══ HERO ═══ */}
+      <section className="relative overflow-hidden pt-32 pb-6 md:pt-36 md:pb-8">
         <div className="pointer-events-none absolute -top-24 -right-24 h-[420px] w-[420px] rounded-full bg-accent/10 blur-3xl" />
         <div className="pointer-events-none absolute -top-32 -left-40 h-[360px] w-[360px] rounded-full bg-secondary/10 blur-3xl" />
 
@@ -494,49 +686,8 @@ export default function EventiPageClient({ events }: { events: EventDiscoveryOut
 
           <Reveal variant="fade-up" delay={200}>
             <p className="mx-auto mt-4 max-w-md text-base text-text-muted md:text-lg">
-              Pretraži po imenu, prostoru ili tagu. Filtriraj po kategoriji i datumu.
+              Pretraži, filtriraj, izađi.
             </p>
-          </Reveal>
-
-          <Reveal variant="fade-up" delay={300}>
-            <div className="mx-auto mt-10 max-w-2xl">
-              <div
-                className={`relative flex items-center gap-3 rounded-2xl border bg-surface-white px-5 py-2 shadow-lg transition-all duration-300 ${
-                  searchFocused
-                    ? "border-accent shadow-xl shadow-accent/10 ring-4 ring-accent/10"
-                    : "border-border shadow-primary/5"
-                }`}
-              >
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0 text-text-muted">
-                  <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.8" />
-                  <path d="M14 14l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
-                <input
-                  ref={searchRef}
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onFocus={() => setSearchFocused(true)}
-                  onBlur={() => setSearchFocused(false)}
-                  placeholder="Pretraži evente, prostore, tagove..."
-                  className="flex-1 bg-transparent py-3 text-base text-neutral placeholder:text-text-muted focus:outline-none"
-                />
-                {search && (
-                  <button
-                    onClick={() => setSearch("")}
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface text-text-muted transition-all hover:bg-border hover:text-primary"
-                    aria-label="Obriši pretragu"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                  </button>
-                )}
-                <kbd className="hidden shrink-0 rounded-md border border-border bg-surface px-2 py-1 text-[10px] font-semibold text-text-muted md:inline-block">
-                  ⌘K
-                </kbd>
-              </div>
-            </div>
           </Reveal>
         </div>
       </section>
@@ -544,43 +695,18 @@ export default function EventiPageClient({ events }: { events: EventDiscoveryOut
       {/* ═══ RESULTS GRID ═══ */}
       <section className="py-12 md:py-16">
         <div className="mx-auto max-w-6xl px-6">
-          <div className="mb-8 flex items-center justify-between gap-4">
-            <div>
-              <h2 className="font-display text-xl font-bold text-neutral md:text-2xl">
-                {filteredEvents.length === processedEvents.length
-                  ? "Svi eventi"
-                  : `${filteredEvents.length} ${filteredEvents.length === 1 ? "rezultat" : "rezultata"}`}
-              </h2>
-              {hasActiveFilters && (
-                <button
-                  onClick={resetFilters}
-                  className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-accent transition-colors hover:text-primary"
-                >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                  Obriši filtere
-                </button>
-              )}
-            </div>
-
-            {/* Soft opt-in lokacija — ne traži automatski, čeka klik */}
-            <button
-              onClick={requestLocation}
-              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-semibold transition-all ${
-                userLocation
-                  ? "border-accent/40 bg-accent/10 text-primary"
-                  : "border-border bg-surface-white text-text-muted hover:border-accent/40 hover:text-primary"
-              }`}
-            >
-              <MapPin size={13} className={userLocation ? "fill-accent/30" : ""} />
-              {userLocation ? "Lokacija aktivna" : "Koristi moju lokaciju"}
-            </button>
+          <div className="mb-8">
+            <h2 className="font-display text-xl font-bold text-neutral md:text-2xl">
+              {filteredEvents.length === processedEvents.length
+                ? "Svi eventi"
+                : `${filteredEvents.length} ${filteredEvents.length === 1 ? "rezultat" : "rezultata"}`}
+            </h2>
           </div>
 
-          {filteredEvents.length > 0 ? (
+          {/* ⚠️ Grid renders sortedEvents — NOT filteredEvents */}
+          {sortedEvents.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredEvents.map((event, i) => (
+              {sortedEvents.map((event, i) => (
                 <EventCard
                   key={event.id}
                   event={event}
@@ -593,7 +719,6 @@ export default function EventiPageClient({ events }: { events: EventDiscoveryOut
           ) : hasActiveFilters ? (
             <EmptyState onReset={resetFilters} />
           ) : (
-            /* API returned no events — show subtle skeletons as placeholder */
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map((i) => (
                 <SkeletonCard key={i} />
@@ -605,7 +730,30 @@ export default function EventiPageClient({ events }: { events: EventDiscoveryOut
 
       <Footer />
 
-      {/* Checkout modal — triggered from EventCard "Kupi kartu" button */}
+      {/* ═══ FILTER DRAWER ═══ */}
+      <FilterDrawer
+        open={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        maxPrice={MAX_PRICE}
+        dateFilter={dateFilter}
+        onDateChange={setDateFilter}
+        priceRange={priceRange}
+        onPriceRangeChange={setPriceRange}
+        distanceRadius={distanceRadius}
+        onDistanceChange={setDistanceRadius}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        draft={draft}
+        onDraftChange={handleDraftChange}
+        onApply={applyDraft}
+        draftResultCount={draftResultCount}
+        onReset={resetDrawerFilters}
+        hasActiveDrawerFilters={hasActiveDrawerFilters}
+        userLocation={userLocation}
+        onRequestLocation={requestLocation}
+      />
+
+      {/* ═══ CHECKOUT MODAL ═══ */}
       {checkoutEvent && (
         <CheckoutModal
           isOpen={true}

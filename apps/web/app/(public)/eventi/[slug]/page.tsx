@@ -8,7 +8,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CheckoutModal from "@/components/CheckoutModal";
 import type { EventDiscoveryOut } from "@/lib/typescript/api-types";
-import { haversineDistanceKm, formatDistance } from "@/lib/utils";
+import { haversineDistanceKm, formatDistance, slugHash } from "@/lib/utils";
 
 const GRADIENTS = [
   "linear-gradient(135deg, #1e1b4b 0%, #4338ca 50%, #7c3aed 100%)",
@@ -25,11 +25,6 @@ const MOCK_VENUE_COORDS = [
   { lat: 45.8189, lng: 15.9748 },
   { lat: 45.8225, lng: 15.9511 },
 ];
-
-function getMockCoords(slug: string) {
-  const hash = slug.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return MOCK_VENUE_COORDS[hash % MOCK_VENUE_COORDS.length];
-}
 
 function formatDateLong(isoString: string): string {
   if (!isoString) return "";
@@ -80,7 +75,7 @@ export default function EventDetailPage({
   if (event === null) notFound();
 
   const gradient =
-    event ? GRADIENTS[event.slug.charCodeAt(0) % GRADIENTS.length] : GRADIENTS[0];
+    event ? GRADIENTS[slugHash(event.slug, GRADIENTS.length)] : GRADIENTS[0];
 
   return (
     <div className="noise-bg relative min-h-screen">
@@ -149,11 +144,16 @@ export default function EventDetailPage({
                         </svg>
                         <span className="font-semibold">
                           {event.venue_name}
-                          {userLocation && (() => {
-                            const c = getMockCoords(event.slug);
-                            const d = haversineDistanceKm(userLocation.lat, userLocation.lng, c.lat, c.lng);
-                            return <span className="font-normal text-text-muted">, {formatDistance(d)}</span>;
-                          })()}
+                          {userLocation && (
+                            <span className="font-normal text-text-muted">
+                              {", "}
+                              {formatDistance(haversineDistanceKm(
+                                userLocation.lat, userLocation.lng,
+                                MOCK_VENUE_COORDS[slugHash(event.slug, MOCK_VENUE_COORDS.length)].lat,
+                                MOCK_VENUE_COORDS[slugHash(event.slug, MOCK_VENUE_COORDS.length)].lng,
+                              ))}
+                            </span>
+                          )}
                         </span>
                       </div>
                     )}

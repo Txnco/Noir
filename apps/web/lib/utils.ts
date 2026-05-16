@@ -24,3 +24,7 @@ export function formatDistance(km: number): string {
   if (km < 1) return `${Math.round(km * 1000)} m`;
   return `${km.toFixed(1)} km`;
 }
+
+export function slugHash(slug: string, mod: number): number {
+  return slug.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % mod;
+}
